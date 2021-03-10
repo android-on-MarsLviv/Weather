@@ -22,6 +22,7 @@
 
     <EditText
         android:id="@+id/msg_city"
+        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
@@ -38,6 +39,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
+        android:onClick="onClickByCity"
         android:text="@string/btn_city_title"
         app:layout_constraintBottom_toTopOf="@+id/button_by_location"
         app:layout_constraintEnd_toEndOf="parent"
@@ -48,6 +50,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="30dp"
+        android:onClick="onClickByLocation"
         android:text="@string/btn_location_title"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

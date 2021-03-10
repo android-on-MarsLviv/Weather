@@ -4,4 +4,7 @@
     <string name="default_message">Today is </string>
     <string name="btn_city_title">Temperature by City</string>
     <string name="btn_location_title">Temperature by Location</string>
+    <string name="msg_wrong_city">Wrong city</string>
+    <string name="weather_key">b8659118e94d512849d68c48c7dbd8c7</string>
+    <string name="weather_entry_point">http://api.openweathermap.org/data/2.5/weather</string>
 </resources>
