@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
                         while ((line=reader.readLine()) != null) {
                             buf.append(line).append("\n");
                         }
+                        reader.close();
                         respond[0] = buf.toString();
 
                     } else {
