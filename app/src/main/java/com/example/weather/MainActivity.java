@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     public void onClickByCity(View view) {
         String city = msgCity.getText().toString();
         if (!checkCityString(city)) {
-            msgTemperature.setText(getText(R.string.msg_wrong_city));
+            msgOnWrongCity();
             return;
         }
 
@@ -55,15 +55,15 @@ public class MainActivity extends AppCompatActivity {
         Log.d("myTag", request);
         String response = doRequest(request);
         if (response != null) {
-            int len = response.length();
-            Log.d("myTag", "len:" + len);
+            Log.d("myTag", "len:" + response.length());
         } else {
-            Log.d("myTag", "response == null");
+            msgOnWrongRequest();
             return;
         }
 
         String formattedOutput = getTemperature(response);
         if (formattedOutput == null) {
+            msgOnWrongCity();
             return;
         }
         String newMessage = getText(R.string.default_message) + " " + formattedOutput + " \u00B0C";
@@ -75,15 +75,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean checkCityString(String city) {
-        // TODO: do some minor checking of input string
+        if (city == null) {
+            msgOnWrongCity();
+            return false;
+        }
+        else if (city.length() < 2 || city.length() > 30) {
+            msgOnWrongCity();
+            return false;
+        }
+        // TODO: do some other checking of input string
         return true;
     }
 
     private String formatRequestWithCity(String city) {
         String api_url = getText(R.string.weather_entry_point).toString();
         String key = getText(R.string.weather_key).toString();
-        String api_url_all = api_url + "?q=" + city + "&appid=" + key + "&units=metric";
-        return api_url_all;
+        return api_url + "?q=" + city + "&appid=" + key + "&units=metric";
     }
 
     private String getTemperature(String response) {
@@ -95,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
             ret = main.getString("temp");
             Log.d("myTag", "temperature = " + ret);
         } catch (JSONException e) {
+            msgOnWrongRequest();
             e.printStackTrace();
         }
 
@@ -103,7 +111,8 @@ public class MainActivity extends AppCompatActivity {
 
     private String doRequest(String request) {
         final String[] respond = {null};
-        Thread t = new Thread(new Runnable() {
+
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 BufferedReader reader = null;
@@ -114,22 +123,26 @@ public class MainActivity extends AppCompatActivity {
                     connection = (HttpsURLConnection) weatherEndpoint.openConnection();
                     connection.setRequestProperty("User-Agent", getText(R.string.app_name).toString());
                     connection.setRequestMethod("GET");
-                    connection.setReadTimeout(10000);
+                    connection.setReadTimeout(3000);
                     connection.connect();
 
                     if (connection.getResponseCode() == 200) {
                         stream = connection.getInputStream();
-                        reader= new BufferedReader(new InputStreamReader(stream));
+                        reader = new BufferedReader(new InputStreamReader(stream));
                         StringBuilder buf = new StringBuilder();
                         String line;
-                        while ((line=reader.readLine()) != null) {
+                        while ((line = reader.readLine()) != null) {
                             buf.append(line).append("\n");
                         }
-                        reader.close();
+
                         respond[0] = buf.toString();
 
                     } else {
                         Log.d("myTag", "not 200");
+                    }
+
+                    if(reader != null) {
+                        reader.close();
                     }
 
                 } catch (MalformedURLException e) {
@@ -139,9 +152,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        t.start();
+        thread.start();
         try {
-            t.join();
+            thread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -149,4 +162,11 @@ public class MainActivity extends AppCompatActivity {
         return respond[0];
     }
 
+    private void msgOnWrongCity() {
+        msgTemperature.setText("You typed wrong City. Try againg, please.");
+    }
+
+    private void msgOnWrongRequest() {
+        msgTemperature.setText("Internet request Error. Try later, please.");
+    }
 }
