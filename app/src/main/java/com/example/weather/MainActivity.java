@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickByCity(View view) {
+        Log.d("myTag", "OnClick start");
         String city = msgCity.getText().toString();
         if (!checkCityString(city)) {
             msgOnWrongCity();
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         }
         String newMessage = getText(R.string.default_message) + " " + formattedOutput + " \u00B0C";
         msgTemperature.setText(newMessage);
+        Log.d("myTag", "OnClick finish");
     }
 
     public void onClickByLocation(View view) {
