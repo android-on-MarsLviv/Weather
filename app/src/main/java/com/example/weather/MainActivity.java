@@ -45,6 +45,72 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickByCity(View view) {
+        Log.d("myTag", "OnClick 1 start");
+
+        String city = msgCity.getText().toString();
+        if (!checkCityString(city)) {
+            msgOnWrongCity();
+            return;
+        }
+
+        String request = formatRequestWithCity(city);
+        Log.d("myTag", request);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("myTag", "run started");
+                String respond = null;
+                try {
+                    respond = doRequest1(request);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (respond != null) {
+                    Log.d("myTag", "len:" + respond.length());
+                } else {
+                    Log.d("myTag", "respond == null");
+                    msgTemperature.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            msgTemperature.setText(getText(R.string.error_wrong_request));
+                        }
+                    });
+                    //msgOnWrongRequest();
+                    return;
+                }
+
+                String formattedOutput = getTemperature(respond);
+                if (formattedOutput == null) {
+                    Log.d("myTag", "formattedOutput == null");
+                    msgTemperature.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            msgTemperature.setText(getText(R.string.error_wrong_city));
+                        }
+                    });
+                    //msgOnWrongCity();
+                    return;
+                }
+
+                String newMessage = getText(R.string.default_message) + " " + formattedOutput + " \u00B0C";
+                Log.d("myTag", "newMessage" + newMessage);
+                msgTemperature.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        msgTemperature.setText(newMessage);
+                    }
+                });
+               // msgTemperature.setText(newMessage); //  CalledFromWrongThreadException
+
+                Log.d("myTag", "run finished");
+            }
+        }).start();
+
+
+        Log.d("myTag", "OnClick 1 finish");
+    }
+    public void onClickByCity1(View view) {
         Log.d("myTag", "OnClick start");
         String city = msgCity.getText().toString();
         if (!checkCityString(city)) {
@@ -111,6 +177,52 @@ public class MainActivity extends AppCompatActivity {
         return ret;
     }
 
+    private String doRequest1(String request) throws IOException {
+        Log.d("myTag", "doRequest 1 start");
+        String respond = null;
+
+        BufferedReader reader = null;
+        InputStream stream = null;
+        HttpsURLConnection connection = null;
+
+        try {
+            URL weatherEndpoint = new URL(request);
+            connection = (HttpsURLConnection) weatherEndpoint.openConnection();
+            connection.setRequestProperty("User-Agent", getText(R.string.app_name).toString());
+            connection.setRequestMethod("GET");
+            connection.setReadTimeout(3000);
+            connection.connect();
+
+            if (connection.getResponseCode() == 200) {
+                stream = connection.getInputStream();
+                reader = new BufferedReader(new InputStreamReader(stream));
+                StringBuilder buf = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buf.append(line).append("\n");
+                }
+                respond = buf.toString();
+            } else {
+                Log.d("myTag", "not 200");
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        //} catch (IOException e) {
+        //    e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                reader.close();
+            }
+            if (stream != null) {
+                stream.close();
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        Log.d("myTag", "doRequest 1 finish");
+        return respond;
+    }
     private String doRequest(String request) {
         final String[] respond = {null};
 
