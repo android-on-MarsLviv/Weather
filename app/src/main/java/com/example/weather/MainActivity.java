@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.MalformedInputException;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -35,17 +36,22 @@ public class MainActivity extends AppCompatActivity {
         widgetEditCity = findViewById(R.id.msg_city);
     }
 
-    public void onClickByCity(View view) throws MalformedURLException {
+    public void onClickByCity(View view) {
+        // TODO: keep this button disabled while current request not finished
         Log.d("myTag", "OnClick start");
 
-        String city = widgetEditCity.getText().toString();
-        if (!checkCityString(city)) {
+        final URL request;
+        try {
+            String city = widgetEditCity.getText().toString();
+            checkCityString(city);
+
+            request = buildRequestUrlWithCity(city);
+            Log.d("myTag", String.valueOf(request));
+        } catch (MalformedURLException | NullPointerException | IllegalArgumentException e) {
+            e.printStackTrace();
             msgOnWrongCity();
             return;
         }
-
-        URL request = formatRequestWithCity(city);
-        Log.d("myTag", String.valueOf(request));
 
         new Thread(new Runnable() {
             @Override
@@ -56,42 +62,24 @@ public class MainActivity extends AppCompatActivity {
                     respond = doRequest(request);
                 } catch (IOException e) {
                     e.printStackTrace();
-                }
-                if (respond != null) {
-                    Log.d("myTag", "len:" + respond.length());
-                } else {
-                    Log.d("myTag", "respond == null");
-                    widgetViewWeather.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            widgetViewWeather.setText(getText(R.string.error_wrong_request));
-                        }
-                    });
-
+                    Log.d("myTag", "request Error");
+                    postMessageToViewWeather(getText(R.string.error_wrong_request).toString());
                     return;
                 }
 
-                String formattedOutput = parseTemperature(respond);
-                if (formattedOutput == null) {
-                    Log.d("myTag", "formattedOutput == null");
-                    widgetViewWeather.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            widgetViewWeather.setText(getText(R.string.error_wrong_city));
-                        }
-                    });
-
+                String temperature = null;
+                try {
+                    temperature = parseTemperature(respond);
+                } catch (NullPointerException | IllegalArgumentException | JSONException e) {
+                    postMessageToViewWeather(getText(R.string.error_wrong_city).toString());
+                    Log.d("myTag", "parseTemperature() Error");
                     return;
                 }
 
-                String newMessage = getText(R.string.default_message) + " " + formattedOutput + " \u00B0C";
-                Log.d("myTag", "newMessage" + newMessage);
-                widgetViewWeather.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        widgetViewWeather.setText(newMessage);
-                    }
-                });
+                String temperatureTemplate = new String((String) getText(R.string.template_temperature_message));
+                String temperatureMessage = String.format(temperatureTemplate, temperature);
+                postMessageToViewWeather(temperatureMessage);
+                Log.d("myTag", "Temp:" + temperatureMessage);
 
                 Log.d("myTag", "run finished");
             }
@@ -104,16 +92,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private boolean checkCityString(String city) {
-        if (city == null) {
-            msgOnWrongCity();
-            return false;
-        }
-        // TODO: do some other checking of input string
-        return true;
+    private void postMessageToViewWeather(String massage) {
+        widgetViewWeather.post(new Runnable() {
+            @Override
+            public void run() {
+                widgetViewWeather.setText(massage);
+            }
+        });
     }
 
-    private URL formatRequestWithCity(String city) throws MalformedURLException {
+    private void checkCityString(String city) throws NullPointerException, IllegalArgumentException {
+        if (city == null) {
+            throw new NullPointerException("Argument is null at method checkCityString");
+        }
+        if (city.length() == 0) {
+            throw new IllegalArgumentException("Argument have zero length at method checkCityString");
+        }
+        // TODO: do some other checking of input string
+    }
+
+    private URL buildRequestUrlWithCity(String city) throws MalformedURLException {
         Uri builtUri = Uri.parse(getText(R.string.weather_api_entry_point).toString())
                 .buildUpon()
                 .appendQueryParameter("q", city)
@@ -123,23 +121,24 @@ public class MainActivity extends AppCompatActivity {
         return new URL(builtUri.toString());
     }
 
-    private String parseTemperature(String response) {
-        String ret = null;
+    private String parseTemperature(String response) throws JSONException, NullPointerException, IllegalArgumentException {
+        String temperature = null;
 
-        try {
-            JSONObject json = new JSONObject(response);
-            JSONObject main  = json.getJSONObject("main");
-            ret = main.getString("temp");
-            Log.d("myTag", "temperature = " + ret);
-        } catch (JSONException e) {
-            msgOnWrongRequest();
-            e.printStackTrace();
+        JSONObject json = new JSONObject(response);
+        JSONObject main  = json.getJSONObject("main");
+        temperature = main.getString("temp");
+        if (temperature == null) {
+            throw new NullPointerException("Couldn't parse response at method parseTempetature");
         }
+        if (temperature.length() == 0) {
+            throw new IllegalArgumentException("Zero response length at method parseTempetature");
+        }
+        Log.d("myTag", "temperature = " + temperature);
 
-        return ret;
+        return temperature;
     }
 
-    private String doRequest(URL weatherEndpoint) throws IOException {
+    private String doRequest(URL weatherEndpoint) throws IOException, NullPointerException, IllegalArgumentException {
         Log.d("myTag", "doRequest start");
         String respond = null;
 
@@ -163,11 +162,16 @@ public class MainActivity extends AppCompatActivity {
                     buf.append(line).append("\n");
                 }
                 respond = buf.toString();
+                if (respond == null) {
+                    throw new NullPointerException("Got null String on respond in doRequest method.");
+                }
+                if (respond.length() == 0) {
+                    throw new IllegalArgumentException("Got zero-length String on respond in doRequest method.");
+                }
             } else {
                 Log.d("myTag", "not 200");
+                throw new IOException("Respond code is: " + connection.getResponseCode());
             }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
         } finally {
             if (reader != null) {
                 reader.close();
