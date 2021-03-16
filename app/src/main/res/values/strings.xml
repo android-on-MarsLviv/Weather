@@ -5,8 +5,8 @@
     <string name="btn_city_title">Temperature by City</string>
     <string name="btn_location_title">Temperature by Location</string>
     <string name="msg_wrong_city">Wrong city</string>
-    <string name="weather_key">b8659118e94d512849d68c48c7dbd8c7</string>
-    <string name="weather_entry_point">https://api.openweathermap.org/data/2.5/weather</string>
+    <string name="weather_api_key">b8659118e94d512849d68c48c7dbd8c7</string>
+    <string name="weather_api_entry_point">https://api.openweathermap.org/data/2.5/weather</string>
     <string name="error_wrong_city">You typed wrong City. Try againg, please.</string>
     <string name="error_wrong_request">Internet request Error. Try later, please.</string>
 </resources>

@@ -2,12 +2,10 @@ package com.example.weather;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.JsonReader;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -18,8 +16,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -27,34 +23,29 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView msgTemperature;
-    private EditText msgCity;
-    private Button buttonByCity;
-    private Button buttonByLocation;
-
+    private TextView widgetViewWeather;
+    private EditText widgetEditCity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        msgTemperature = findViewById(R.id.msg_temperature);
-        msgCity = findViewById(R.id.msg_city);
-        buttonByCity = findViewById(R.id.button_by_city);
-        buttonByLocation = findViewById(R.id.button_by_location);
+        widgetViewWeather = findViewById(R.id.msg_temperature);
+        widgetEditCity = findViewById(R.id.msg_city);
     }
 
-    public void onClickByCity(View view) {
-        Log.d("myTag", "OnClick 1 start");
+    public void onClickByCity(View view) throws MalformedURLException {
+        Log.d("myTag", "OnClick start");
 
-        String city = msgCity.getText().toString();
+        String city = widgetEditCity.getText().toString();
         if (!checkCityString(city)) {
             msgOnWrongCity();
             return;
         }
 
-        String request = formatRequestWithCity(city);
-        Log.d("myTag", request);
+        URL request = formatRequestWithCity(city);
+        Log.d("myTag", String.valueOf(request));
 
         new Thread(new Runnable() {
             @Override
@@ -62,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("myTag", "run started");
                 String respond = null;
                 try {
-                    respond = doRequest1(request);
+                    respond = doRequest(request);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -70,71 +61,42 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("myTag", "len:" + respond.length());
                 } else {
                     Log.d("myTag", "respond == null");
-                    msgTemperature.post(new Runnable() {
+                    widgetViewWeather.post(new Runnable() {
                         @Override
                         public void run() {
-                            msgTemperature.setText(getText(R.string.error_wrong_request));
+                            widgetViewWeather.setText(getText(R.string.error_wrong_request));
                         }
                     });
-                    //msgOnWrongRequest();
+
                     return;
                 }
 
-                String formattedOutput = getTemperature(respond);
+                String formattedOutput = parseTemperature(respond);
                 if (formattedOutput == null) {
                     Log.d("myTag", "formattedOutput == null");
-                    msgTemperature.post(new Runnable() {
+                    widgetViewWeather.post(new Runnable() {
                         @Override
                         public void run() {
-                            msgTemperature.setText(getText(R.string.error_wrong_city));
+                            widgetViewWeather.setText(getText(R.string.error_wrong_city));
                         }
                     });
-                    //msgOnWrongCity();
+
                     return;
                 }
 
                 String newMessage = getText(R.string.default_message) + " " + formattedOutput + " \u00B0C";
                 Log.d("myTag", "newMessage" + newMessage);
-                msgTemperature.post(new Runnable() {
+                widgetViewWeather.post(new Runnable() {
                     @Override
                     public void run() {
-                        msgTemperature.setText(newMessage);
+                        widgetViewWeather.setText(newMessage);
                     }
                 });
-               // msgTemperature.setText(newMessage); //  CalledFromWrongThreadException
 
                 Log.d("myTag", "run finished");
             }
         }).start();
 
-
-        Log.d("myTag", "OnClick 1 finish");
-    }
-    public void onClickByCity1(View view) {
-        Log.d("myTag", "OnClick start");
-        String city = msgCity.getText().toString();
-        if (!checkCityString(city)) {
-            msgOnWrongCity();
-            return;
-        }
-
-        String request = formatRequestWithCity(city);
-        Log.d("myTag", request);
-        String response = doRequest(request);
-        if (response != null) {
-            Log.d("myTag", "len:" + response.length());
-        } else {
-            msgOnWrongRequest();
-            return;
-        }
-
-        String formattedOutput = getTemperature(response);
-        if (formattedOutput == null) {
-            msgOnWrongCity();
-            return;
-        }
-        String newMessage = getText(R.string.default_message) + " " + formattedOutput + " \u00B0C";
-        msgTemperature.setText(newMessage);
         Log.d("myTag", "OnClick finish");
     }
 
@@ -147,21 +109,21 @@ public class MainActivity extends AppCompatActivity {
             msgOnWrongCity();
             return false;
         }
-        else if (city.length() < 2 || city.length() > 30) {
-            msgOnWrongCity();
-            return false;
-        }
         // TODO: do some other checking of input string
         return true;
     }
 
-    private String formatRequestWithCity(String city) {
-        String api_url = getText(R.string.weather_entry_point).toString();
-        String key = getText(R.string.weather_key).toString();
-        return api_url + "?q=" + city + "&appid=" + key + "&units=metric";
+    private URL formatRequestWithCity(String city) throws MalformedURLException {
+        Uri builtUri = Uri.parse(getText(R.string.weather_api_entry_point).toString())
+                .buildUpon()
+                .appendQueryParameter("q", city)
+                .appendQueryParameter("appid", getText(R.string.weather_api_key).toString())
+                .appendQueryParameter("units", "metric")
+                .build();
+        return new URL(builtUri.toString());
     }
 
-    private String getTemperature(String response) {
+    private String parseTemperature(String response) {
         String ret = null;
 
         try {
@@ -177,8 +139,8 @@ public class MainActivity extends AppCompatActivity {
         return ret;
     }
 
-    private String doRequest1(String request) throws IOException {
-        Log.d("myTag", "doRequest 1 start");
+    private String doRequest(URL weatherEndpoint) throws IOException {
+        Log.d("myTag", "doRequest start");
         String respond = null;
 
         BufferedReader reader = null;
@@ -186,14 +148,13 @@ public class MainActivity extends AppCompatActivity {
         HttpsURLConnection connection = null;
 
         try {
-            URL weatherEndpoint = new URL(request);
             connection = (HttpsURLConnection) weatherEndpoint.openConnection();
             connection.setRequestProperty("User-Agent", getText(R.string.app_name).toString());
             connection.setRequestMethod("GET");
             connection.setReadTimeout(3000);
             connection.connect();
 
-            if (connection.getResponseCode() == 200) {
+            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
                 reader = new BufferedReader(new InputStreamReader(stream));
                 StringBuilder buf = new StringBuilder();
@@ -207,8 +168,6 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();
-        //} catch (IOException e) {
-        //    e.printStackTrace();
         } finally {
             if (reader != null) {
                 reader.close();
@@ -220,67 +179,15 @@ public class MainActivity extends AppCompatActivity {
                 connection.disconnect();
             }
         }
-        Log.d("myTag", "doRequest 1 finish");
+        Log.d("myTag", "doRequest finish");
         return respond;
-    }
-    private String doRequest(String request) {
-        final String[] respond = {null};
-
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                BufferedReader reader = null;
-                InputStream stream = null;
-                HttpsURLConnection connection = null;
-                try {
-                    URL weatherEndpoint = new URL(request);
-                    connection = (HttpsURLConnection) weatherEndpoint.openConnection();
-                    connection.setRequestProperty("User-Agent", getText(R.string.app_name).toString());
-                    connection.setRequestMethod("GET");
-                    connection.setReadTimeout(3000);
-                    connection.connect();
-
-                    if (connection.getResponseCode() == 200) {
-                        stream = connection.getInputStream();
-                        reader = new BufferedReader(new InputStreamReader(stream));
-                        StringBuilder buf = new StringBuilder();
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            buf.append(line).append("\n");
-                        }
-
-                        respond[0] = buf.toString();
-
-                    } else {
-                        Log.d("myTag", "not 200");
-                    }
-
-                    if(reader != null) {
-                        reader.close();
-                    }
-
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return respond[0];
     }
 
     private void msgOnWrongCity() {
-        msgTemperature.setText("You typed wrong City. Try againg, please.");
+        widgetViewWeather.setText(getText(R.string.error_wrong_city));
     }
 
     private void msgOnWrongRequest() {
-        msgTemperature.setText("Internet request Error. Try later, please.");
+        widgetViewWeather.setText(getText(R.string.error_wrong_request));
     }
 }
