@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClickByCity(View view) {
         // TODO: keep this button disabled while current request not finished
+        // https://trello.com/c/SFB76xJc
         Log.d("myTag", "OnClick start");
 
         final URL request;
