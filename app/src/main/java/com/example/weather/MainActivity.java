@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 String respond = null;
                 try {
                     respond = doRequest(request);
-                } catch (IOException e) {
+                } catch (IOException | NullPointerException | IllegalArgumentException e) {
                     e.printStackTrace();
                     Log.d("myTag", "request Error");
                     postMessageToViewWeather(getText(R.string.error_wrong_request).toString());
