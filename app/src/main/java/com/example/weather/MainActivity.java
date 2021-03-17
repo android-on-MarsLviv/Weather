@@ -7,9 +7,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,26 +31,31 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private TextView widgetViewWeather;
-    private EditText widgetEditCity;
+    private TextView viewShowWeather;
+    private EditText viewEditCity;
+    private Button buttonByCity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        widgetViewWeather = findViewById(R.id.msg_temperature);
-        widgetEditCity = findViewById(R.id.msg_city);
+        viewShowWeather = findViewById(R.id.msg_temperature);
+        viewEditCity = findViewById(R.id.msg_city);
+        buttonByCity = findViewById(R.id.button_by_city);
+
+        buttonByCity.setOnClickListener(this::onClickByCity);
     }
 
-    public void onClickByCity(View view) {
+    private void onClickByCity(View view) {
         // TODO: keep this button disabled while current request not finished
         // https://trello.com/c/SFB76xJc
         Log.d(TAG, "OnClick start");
 
         final URL request;
-        String cityName = widgetEditCity.getText().toString();
+        String cityName = viewEditCity.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
+            Toast.makeText(this, getText(R.string.error_wrong_city), Toast.LENGTH_SHORT).show();
             msgOnWrongCity();
             return;
         }
@@ -71,7 +79,9 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     respond = doRequest(request);
                     if (TextUtils.isEmpty(respond)) {
-                        msgOnWrongRequest();
+                        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "doRequest Error");
+                        //msgOnWrongRequest();
                         return;
                     }
                 } catch (IOException e) {
@@ -85,7 +95,8 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     temperature = parseTemperature(respond);
                     if (TextUtils.isEmpty(temperature)) {
-                        msgOnWrongRequest();
+                        Log.d(TAG, "parseTemperature Error");
+                        //msgOnWrongRequest();
                         return;
                     }
                 } catch (JSONException e) {
@@ -111,10 +122,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTemperatureView(String massage) {
-        widgetViewWeather.post(new Runnable() {
+        viewShowWeather.post(new Runnable() {
             @Override
             public void run() {
-                widgetViewWeather.setText(massage);
+                viewShowWeather.setText(massage);
             }
         });
     }
@@ -182,10 +193,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void msgOnWrongCity() {
-        widgetViewWeather.setText(getText(R.string.error_wrong_city));
+        viewShowWeather.setText(getText(R.string.error_wrong_city));
     }
 
     private void msgOnWrongRequest() {
-        widgetViewWeather.setText(getText(R.string.error_wrong_request));
+        viewShowWeather.setText(getText(R.string.error_wrong_request));
     }
 }
