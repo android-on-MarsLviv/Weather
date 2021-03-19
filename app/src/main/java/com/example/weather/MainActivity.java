@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,19 +17,16 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.MalformedInputException;
 
 import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = Thread.currentThread().getStackTrace()[2].getClassName();
+    private static final String TAG = StreamUtils.class.getSimpleName();
 
     private TextView showWeatherView;
     private EditText editCityView;
@@ -97,10 +93,8 @@ public class MainActivity extends AppCompatActivity {
                     notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
-
-                String temperatureTemplate = new String((String) getText(R.string.template_temperature_message));
-                String temperatureMessage = String.format(temperatureTemplate, temperature);
-                updateTemperatureView(temperatureMessage);
+                
+                updateTemperatureView(getString(R.string.template_temperature_message, temperature));
 
                 Log.d(TAG, "run finish");
             }
@@ -160,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
-                respond = StreamUtils.StreamToString(stream);
+                respond = StreamUtils.streamToString(stream);
             }
         } finally {
             StreamUtils.closeAll(stream);
