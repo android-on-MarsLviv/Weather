@@ -26,7 +26,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = StreamUtils.class.getSimpleName();
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private TextView showWeatherView;
     private EditText editCityView;
@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                     notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
-                
+
                 updateTemperatureView(getString(R.string.template_temperature_message, temperature));
 
                 Log.d(TAG, "run finish");
