@@ -3,6 +3,7 @@ package com.example.weather;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -29,34 +30,37 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = Thread.currentThread().getStackTrace()[2].getClassName();
 
-    private TextView viewShowWeather;
-    private EditText viewEditCity;
-    private Button buttonByCity;
+    private TextView showWeatherView;
+    private EditText editCityView;
+    private Button weatherByCityButton;
+
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        viewShowWeather = findViewById(R.id.msg_temperature);
-        viewEditCity = findViewById(R.id.msg_city);
-        buttonByCity = findViewById(R.id.button_by_city);
+        showWeatherView = findViewById(R.id.msg_temperature);
+        editCityView = findViewById(R.id.msg_city);
+        weatherByCityButton = findViewById(R.id.button_by_city);
 
-        buttonByCity.setOnClickListener(this::onClickByCity);
+        weatherByCityButton.setOnClickListener(this::onClickByCity);
+
+        context = this;
     }
 
     private void onClickByCity(View view) {
         // TODO: keep this button disabled while current request not finished
         // https://trello.com/c/SFB76xJc
-        Log.d(TAG, "OnClick start");
+        Log.d(TAG, "onClick start");
 
         final URL request;
-        String cityName = viewEditCity.getText().toString();
+        String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
-            Toast.makeText(this, getText(R.string.error_wrong_city), Toast.LENGTH_SHORT).show();
-            msgOnWrongCity();
+            notificationOnError(context, getText(R.string.error_wrong_city).toString());
             return;
         }
 
@@ -64,8 +68,7 @@ public class MainActivity extends AppCompatActivity {
             request = buildRequestUrlWithCity(cityName);
             Log.d(TAG, String.valueOf(request));
         } catch (MalformedURLException e) {
-            e.printStackTrace();
-            msgOnWrongCity();
+            notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
             return;
         }
 
@@ -75,33 +78,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 Log.d(TAG, "run started");
+
                 String respond = null;
+                String temperature = null;
                 try {
                     respond = doRequest(request);
                     if (TextUtils.isEmpty(respond)) {
-                        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "doRequest Error");
-                        //msgOnWrongRequest();
+                        notificationOnError(context, getText(R.string.error_wrong_request).toString());
                         return;
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.d(TAG, "request Error");
-                    updateTemperatureView(getText(R.string.error_wrong_request).toString());
-                    return;
-                }
 
-                String temperature = null;
-                try {
                     temperature = parseTemperature(respond);
                     if (TextUtils.isEmpty(temperature)) {
-                        Log.d(TAG, "parseTemperature Error");
-                        //msgOnWrongRequest();
+                        notificationOnError(context, getText(R.string.error_wrong_request).toString());
                         return;
                     }
-                } catch (JSONException e) {
-                    updateTemperatureView(getText(R.string.error_wrong_city).toString());
-                    Log.d(TAG, "parseTemperature Error");
+                } catch (IOException | JSONException e) {
+                    notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
 
@@ -113,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
-        Log.d(TAG, "OnClick finish");
+        Log.d(TAG, "onClick finish");
     }
 
     public void onClickByLocation(View view) {
@@ -122,10 +115,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTemperatureView(String massage) {
-        viewShowWeather.post(new Runnable() {
+        showWeatherView.post(new Runnable() {
             @Override
             public void run() {
-                viewShowWeather.setText(massage);
+                showWeatherView.setText(massage);
             }
         });
     }
@@ -156,34 +149,21 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "doRequest start");
         String respond = null;
 
-        BufferedReader reader = null;
         InputStream stream = null;
         HttpsURLConnection connection = null;
 
         try {
             connection = (HttpsURLConnection) weatherEndpoint.openConnection();
-            connection.setRequestProperty("User-Agent", getText(R.string.app_name).toString());
             connection.setRequestMethod("GET");
             connection.setReadTimeout(3000);
             connection.connect();
 
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
-                reader = new BufferedReader(new InputStreamReader(stream));
-                StringBuilder buf = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buf.append(line).append("\n");
-                }
-                respond = buf.toString();
+                respond = StreamUtils.StreamToString(stream);
             }
         } finally {
-            if (reader != null) {
-                reader.close();
-            }
-            if (stream != null) {
-                stream.close();
-            }
+            StreamUtils.closeAll(stream);
             if (connection != null) {
                 connection.disconnect();
             }
@@ -192,11 +172,15 @@ public class MainActivity extends AppCompatActivity {
         return respond;
     }
 
-    private void msgOnWrongCity() {
-        viewShowWeather.setText(getText(R.string.error_wrong_city));
+    private void notificationOnError(Context context, String notificationToUser) {
+        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        runOnUiThread(() -> Toast.makeText(context, notificationToUser, Toast.LENGTH_SHORT).show());
     }
 
-    private void msgOnWrongRequest() {
-        viewShowWeather.setText(getText(R.string.error_wrong_request));
+    private void notificationOnError(Context context, String notificationToUser, Exception exception) {
+        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        runOnUiThread(() -> Toast.makeText(context, notificationToUser, Toast.LENGTH_SHORT).show());
+        exception.printStackTrace();
     }
+
 }
