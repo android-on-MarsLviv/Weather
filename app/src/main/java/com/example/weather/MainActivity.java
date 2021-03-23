@@ -32,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText editCityView;
     private Button weatherByCityButton;
 
+    LocationGetter locationGetter;
+
     private Context context;
 
     @Override
@@ -44,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
         weatherByCityButton = findViewById(R.id.button_by_city);
 
         weatherByCityButton.setOnClickListener(this::onClickByCity);
+
+        locationGetter = new LocationGetter(MainActivity.this);;
 
         context = this;
     }
@@ -106,6 +110,16 @@ public class MainActivity extends AppCompatActivity {
     public void onClickByLocation(View view) {
         // todo: implement
         // https://trello.com/c/W4VxNHog
+        Log.d(TAG, "onClickByLocation start");
+
+        locationGetter.getLocation(new LocationCallback() {
+            @Override
+            public void onRetrieveLocation(double latitude, double longitude) {
+                Log.d(TAG, "latitude:" + latitude + "  longitude:" + longitude);
+            }
+        });
+
+        Log.d(TAG, "onClickByLocation finish");
     }
 
     private void updateTemperatureView(String massage) {
