@@ -1,5 +1,5 @@
 package com.example.weather;
 
-public interface LocationCallback {
+public interface MyLocationCallback {
     void onRetrieveLocation(double latitude, double longitude);
 }

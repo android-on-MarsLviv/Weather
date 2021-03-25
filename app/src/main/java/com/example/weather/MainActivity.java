@@ -1,5 +1,6 @@
 package com.example.weather;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText editCityView;
     private Button weatherByCityButton;
 
-    LocationGetter locationGetter;
+    LocationClient locationClient;
 
     private Context context;
 
@@ -47,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
         weatherByCityButton.setOnClickListener(this::onClickByCity);
 
-        locationGetter = new LocationGetter(MainActivity.this);;
+        locationClient = new LocationClient(MainActivity.this);;
 
         context = this;
     }
@@ -112,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         // https://trello.com/c/W4VxNHog
         Log.d(TAG, "onClickByLocation start");
 
-        locationGetter.getLocation(new LocationCallback() {
+        locationClient.getLocation(new MyLocationCallback() {
             @Override
             public void onRetrieveLocation(double latitude, double longitude) {
                 Log.d(TAG, "latitude:" + latitude + "  longitude:" + longitude);
@@ -120,6 +121,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         Log.d(TAG, "onClickByLocation finish");
+    }
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d("TAG", "onRequestPermissionsResult in mainActivity");
     }
 
     private void updateTemperatureView(String massage) {
