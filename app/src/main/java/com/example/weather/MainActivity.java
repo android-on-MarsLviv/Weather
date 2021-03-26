@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -37,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Context context;
 
+    LocationClient.OnLocationCallback onLocationCallback;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +54,13 @@ public class MainActivity extends AppCompatActivity {
         locationClient = new LocationClient(MainActivity.this);;
 
         context = this;
+
+        onLocationCallback = new LocationClient.OnLocationCallback() {
+            @Override
+            public void onRetrieveLocation(double latitude, double longitude) {
+                Log.d(TAG, "latitude:" + latitude + "  longitude:" + longitude);
+            }
+        };
     }
 
     private void onClickByCity(View view) {
@@ -113,20 +123,32 @@ public class MainActivity extends AppCompatActivity {
         // https://trello.com/c/W4VxNHog
         Log.d(TAG, "onClickByLocation start");
 
-        locationClient.getLocation(new MyLocationCallback() {
-            @Override
-            public void onRetrieveLocation(double latitude, double longitude) {
-                Log.d(TAG, "latitude:" + latitude + "  longitude:" + longitude);
-            }
-        });
+        locationClient.getLocation(onLocationCallback);
 
         Log.d(TAG, "onClickByLocation finish");
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d("TAG", "onRequestPermissionsResult in mainActivity");
-    }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
+        switch (requestCode) {
+            case LocationClient.LOCATION_REQUEST: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    locationClient.getLocation(onLocationCallback);
+                } else if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            }
+        }
+    }
+    /*
+    PackageManager.PERMISSION_GRANTED   code 0
+    PackageManager.PERMISSION_DENIED    code -1
+    on denied grantResults[0]:-1    grantResults[1]:-1
+     */
     private void updateTemperatureView(String massage) {
         showWeatherView.post(new Runnable() {
             @Override

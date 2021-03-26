@@ -20,33 +20,30 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationCallback;
 
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
+public class LocationClient {
 
-//import java.util.logging.Handler;
-
-public class LocationClient implements LocationListener {
+    private static final String TAG = LocationClient.class.getSimpleName();
 
     private FusedLocationProviderClient fusedLocationClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
 
-    double latitude;
-    double longitude;
+    private double latitude;
+    private double longitude;
 
-    Context context;
+    private Context context;
 
-    public static final int LOCATION_REQUEST = 1000;
-    public static final int GPS_REQUEST = 1001;
+    static final int LOCATION_REQUEST = 1000;       // todo: find equivalent on android SDK
 
     public LocationClient(Context context) {
         this.context = context;
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+
         locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(10 * 1000); // 10 seconds
-        locationRequest.setFastestInterval(5 * 1000); // 5 seconds
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);// PRIORITY_BALANCED_POWER_ACCURACY   PRIORITY_LOW_POWER   PRIORITY_NO_POWER
+        locationRequest.setInterval(10 * 1000);
+        locationRequest.setFastestInterval(5 * 1000);
 
         locationCallback = new LocationCallback() {
             @Override
@@ -65,71 +62,42 @@ public class LocationClient implements LocationListener {
         };
     }
 
-    public void getLocation(MyLocationCallback myLocationCallback) {
+    //public void getLocation(MyLocationCallback myLocationCallback) {
+    public void getLocation(OnLocationCallback myLocationCallback) {
         new Handler(Looper.getMainLooper()).post(() -> {
-            //latitude = 10.11;
-            //longitude = 20.22;
-            if (    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&// check
                     ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
-                Log.d("TAG", "if case");
+                Log.d(TAG, "if case -> request permissions");
             } else {
                 fusedLocationClient.getLastLocation().addOnSuccessListener((Activity) context, location -> {
                     if (location != null) {
-                        latitude = location.getLatitude();Log.d("TAG", "lat 1:" + latitude);
-                        longitude = location.getLongitude();Log.d("TAG", "lon 1:" + longitude);
+                        latitude = location.getLatitude();
+                        longitude = location.getLongitude();
                         myLocationCallback.onRetrieveLocation(latitude, longitude);
                     } else {
-                        //fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
-                        Log.d("TAG", "location == null");
+                        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
+                        Log.d(TAG, "location == null");
                     }
+                }).addOnCanceledListener(() -> {
+                    Log.d(TAG, "location listener cancelled");
+                }).addOnFailureListener((location) -> {// check
+                    Log.d(TAG, "location listener failed");
                 });
-                Log.d("TAG", "else case");
+                Log.d(TAG, "else case -> permissions already grunted");
             }
-            /*try {
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
-            Log.d("TAG", "lat 2:" + latitude);
-            Log.d("TAG", "lon 2:" + longitude);
-//            myLocationCallback.onRetrieveLocation(latitude, longitude);
         });
     }
 
-    //@Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d("TAG", "onRequestPermissionsResult");
-        /*super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 1000: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    if (isContinue) {
-                        mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
-                    } else {
-                        mFusedLocationClient.getLastLocation().addOnSuccessListener(MainActivity.this, location -> {
-                            if (location != null) {
-                                wayLatitude = location.getLatitude();
-                                wayLongitude = location.getLongitude();
-                                txtLocation.setText(String.format(Locale.US, "%s - %s", wayLatitude, wayLongitude));
-                            } else {
-                                mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
-                            }
-                        });
-                    }
-                } else {
-                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            }
-        }*/
+    public double getLatitude() {
+        return latitude;
     }
 
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
+    public double getLongitude() {
+        return longitude;
+    }
 
+    public interface OnLocationCallback {
+        void onRetrieveLocation(double latitude, double longitude);
     }
 }
