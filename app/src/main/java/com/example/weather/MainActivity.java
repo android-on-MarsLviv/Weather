@@ -4,8 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -34,11 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText editCityView;
     private Button weatherByCityButton;
 
-    LocationClient locationClient;
-
-    private Context context;
-
-    LocationClient.OnLocationCallback onLocationCallback;
+    private LocationClient locationClient;
+    private Location currentLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,16 +47,13 @@ public class MainActivity extends AppCompatActivity {
 
         weatherByCityButton.setOnClickListener(this::onClickByCity);
 
-        locationClient = new LocationClient(MainActivity.this);;
-
-        context = this;
-
-        onLocationCallback = new LocationClient.OnLocationCallback() {
+        locationClient = new LocationClient(this, new LocationClient.RetrieveLocationCallback() {
             @Override
-            public void onRetrieveLocation(double latitude, double longitude) {
-                Log.d(TAG, "latitude:" + latitude + "  longitude:" + longitude);
+            public void onRetrieveLocation(Location location) {
+                currentLocation = location;
+                Log.d(TAG, "curr latitude:" + currentLocation.getLatitude() + "  curr longitude:" + currentLocation.getLongitude());
             }
-        };
+        });
     }
 
     private void onClickByCity(View view) {
@@ -71,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         final URL request;
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
-            notificationOnError(context, getText(R.string.error_wrong_city).toString());
+            notificationOnError(getText(R.string.error_wrong_city).toString());
             return;
         }
 
@@ -79,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
             request = buildRequestUrlWithCity(cityName);
             Log.d(TAG, String.valueOf(request));
         } catch (MalformedURLException e) {
-            notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
+            notificationOnError(getText(R.string.error_wrong_request).toString(), e);
             return;
         }
 
@@ -90,22 +83,22 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d(TAG, "run started");
 
-                String respond = null;
-                String temperature = null;
+                String respond;
+                String temperature;
                 try {
                     respond = doRequest(request);
                     if (TextUtils.isEmpty(respond)) {
-                        notificationOnError(context, getText(R.string.error_wrong_request).toString());
+                        notificationOnError(getText(R.string.error_wrong_request).toString());
                         return;
                     }
 
                     temperature = parseTemperature(respond);
                     if (TextUtils.isEmpty(temperature)) {
-                        notificationOnError(context, getText(R.string.error_wrong_request).toString());
+                        notificationOnError(getText(R.string.error_wrong_request).toString());
                         return;
                     }
                 } catch (IOException | JSONException e) {
-                    notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
+                    notificationOnError(getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
 
@@ -123,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         // https://trello.com/c/W4VxNHog
         Log.d(TAG, "onClickByLocation start");
 
-        locationClient.getLocation(onLocationCallback);
+        locationClient.getLocation();
 
         Log.d(TAG, "onClickByLocation finish");
     }
@@ -131,24 +124,9 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        switch (requestCode) {
-            case LocationClient.LOCATION_REQUEST: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    locationClient.getLocation(onLocationCallback);
-                } else if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            }
-        }
+        locationClient.onRequestPermissionsResult(requestCode, grantResults);
     }
-    /*
-    PackageManager.PERMISSION_GRANTED   code 0
-    PackageManager.PERMISSION_DENIED    code -1
-    on denied grantResults[0]:-1    grantResults[1]:-1
-     */
+
     private void updateTemperatureView(String massage) {
         showWeatherView.post(new Runnable() {
             @Override
@@ -207,14 +185,14 @@ public class MainActivity extends AppCompatActivity {
         return respond;
     }
 
-    private void notificationOnError(Context context, String notificationToUser) {
+    private void notificationOnError(String notificationToUser) {
         updateTemperatureView(getText(R.string.default_temperature_message).toString());
-        runOnUiThread(() -> Toast.makeText(context, notificationToUser, Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
     }
 
-    private void notificationOnError(Context context, String notificationToUser, Exception exception) {
+    private void notificationOnError(String notificationToUser, Exception exception) {
         updateTemperatureView(getText(R.string.default_temperature_message).toString());
-        runOnUiThread(() -> Toast.makeText(context, notificationToUser, Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
         exception.printStackTrace();
     }
 

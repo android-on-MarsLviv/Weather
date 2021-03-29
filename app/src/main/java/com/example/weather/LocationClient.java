@@ -1,13 +1,12 @@
 package com.example.weather;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.os.Looper;
-import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -24,80 +23,78 @@ public class LocationClient {
 
     private static final String TAG = LocationClient.class.getSimpleName();
 
-    private FusedLocationProviderClient fusedLocationClient;
-    private LocationRequest locationRequest;
-    private LocationCallback locationCallback;
+    private final FusedLocationProviderClient fusedLocationClient;
+    private final LocationRequest locationRequest;
+    private final LocationCallback locationCallback;
 
-    private double latitude;
-    private double longitude;
+    private final RetrieveLocationCallback retrieveLocationCallback;
 
-    private Context context;
+    public Location currentLocation;
 
-    static final int LOCATION_REQUEST = 1000;       // todo: find equivalent on android SDK
+    private final Context context;
 
-    public LocationClient(Context context) {
+    static final int LOCATION_REQUEST = 1000;
+
+    public LocationClient(@NonNull Context context, RetrieveLocationCallback retrieveLocationCallback) {
         this.context = context;
+        this.retrieveLocationCallback = retrieveLocationCallback;
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
         locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);// PRIORITY_BALANCED_POWER_ACCURACY   PRIORITY_LOW_POWER   PRIORITY_NO_POWER
-        locationRequest.setInterval(10 * 1000);
-        locationRequest.setFastestInterval(5 * 1000);
+        locationRequest.setNumUpdates(1);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         locationCallback = new LocationCallback() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    return;
-                }
+            public void onLocationResult(@NonNull LocationResult locationResult) {
                 for (Location location : locationResult.getLocations()) {
                     if (location != null) {
-                        latitude = location.getLatitude();
-                        longitude = location.getLongitude();
-                        fusedLocationClient.removeLocationUpdates(locationCallback);
+                        currentLocation = location;
                     }
                 }
             }
         };
     }
 
-    //public void getLocation(MyLocationCallback myLocationCallback) {
-    public void getLocation(OnLocationCallback myLocationCallback) {
-        new Handler(Looper.getMainLooper()).post(() -> {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&// check
+    public void getLocation() {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
                 Log.d(TAG, "if case -> request permissions");
             } else {
-                fusedLocationClient.getLastLocation().addOnSuccessListener((Activity) context, location -> {
-                    if (location != null) {
-                        latitude = location.getLatitude();
-                        longitude = location.getLongitude();
-                        myLocationCallback.onRetrieveLocation(latitude, longitude);
-                    } else {
-                        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
-                        Log.d(TAG, "location == null");
-                    }
-                }).addOnCanceledListener(() -> {
-                    Log.d(TAG, "location listener cancelled");
-                }).addOnFailureListener((location) -> {// check
-                    Log.d(TAG, "location listener failed");
-                });
-                Log.d(TAG, "else case -> permissions already grunted");
+                getFusedLocation();
             }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void getFusedLocation() {
+        fusedLocationClient.getLastLocation().addOnSuccessListener((Activity) context, location -> {
+            if (location != null) {
+                retrieveLocationCallback.onRetrieveLocation(location);
+            } else {
+                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+                Log.d(TAG, "location == null");
+            }
+        }).addOnCanceledListener(() -> {
+            Log.d(TAG, "location listener cancelled");
+        }).addOnFailureListener((location) -> {
+            Log.d(TAG, "Location listener failed. Settings don't match request.");
         });
+        Log.d(TAG, "else case -> permissions already grunted");
     }
 
-    public double getLatitude() {
-        return latitude;
+    public void onRequestPermissionsResult(int requestCode, @NonNull int[] grantResults) {
+        if (requestCode == LocationClient.LOCATION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getFusedLocation();
+            } else {
+                Toast.makeText(context, "Permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public interface OnLocationCallback {
-        void onRetrieveLocation(double latitude, double longitude);
+    public interface RetrieveLocationCallback {
+        void onRetrieveLocation(Location location);
     }
 }
