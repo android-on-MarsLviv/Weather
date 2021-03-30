@@ -29,8 +29,6 @@ public class LocationClient {
 
     private final RetrieveLocationCallback retrieveLocationCallback;
 
-    public Location currentLocation;
-
     private final Context context;
 
     static final int LOCATION_REQUEST = 1000;
@@ -50,7 +48,7 @@ public class LocationClient {
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 for (Location location : locationResult.getLocations()) {
                     if (location != null) {
-                        currentLocation = location;
+                        getFusedLocation();
                     }
                 }
             }
@@ -61,8 +59,9 @@ public class LocationClient {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
-                Log.d(TAG, "if case -> request permissions");
+                Log.i(TAG, "request permissions");
             } else {
+                Log.i(TAG, "permissions already grunted");
                 getFusedLocation();
             }
     }
@@ -73,15 +72,14 @@ public class LocationClient {
             if (location != null) {
                 retrieveLocationCallback.onRetrieveLocation(location);
             } else {
+                Log.i(TAG, "location == null");
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-                Log.d(TAG, "location == null");
             }
         }).addOnCanceledListener(() -> {
-            Log.d(TAG, "location listener cancelled");
+            Log.i(TAG, "location listener cancelled.");
         }).addOnFailureListener((location) -> {
-            Log.d(TAG, "Location listener failed. Settings don't match request.");
+            Log.i(TAG, "Location listener failed.");
         });
-        Log.d(TAG, "else case -> permissions already grunted");
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull int[] grantResults) {
