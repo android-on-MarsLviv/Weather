@@ -26,7 +26,6 @@ import java.net.URL;
 import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
-
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private TextView showWeatherView;
@@ -49,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
         locationClient = new LocationClient(this, new LocationClient.RetrieveLocationCallback() {
             @Override
-            public void onRetrieveLocation(Location location) {
+            public void onRetrieveLocation(@NonNull Location location) {
                 currentLocation = location;
                 Log.d(TAG, "curr latitude:" + currentLocation.getLatitude() + "  curr longitude:" + currentLocation.getLongitude());
             }

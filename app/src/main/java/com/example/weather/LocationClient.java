@@ -3,7 +3,6 @@ package com.example.weather;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Looper;
@@ -20,7 +19,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationCallback;
 
 public class LocationClient {
-
     private static final String TAG = LocationClient.class.getSimpleName();
 
     private final FusedLocationProviderClient fusedLocationClient;
@@ -28,16 +26,15 @@ public class LocationClient {
     private final LocationCallback locationCallback;
 
     private final RetrieveLocationCallback retrieveLocationCallback;
-
-    private final Context context;
+    private final Activity activity;
 
     static final int LOCATION_REQUEST = 1000;
 
-    public LocationClient(@NonNull Context context, RetrieveLocationCallback retrieveLocationCallback) {
-        this.context = context;
+    public LocationClient(@NonNull Activity activity, @NonNull RetrieveLocationCallback retrieveLocationCallback) {
+        this.activity = activity;
         this.retrieveLocationCallback = retrieveLocationCallback;
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity);
 
         locationRequest = LocationRequest.create();
         locationRequest.setNumUpdates(1);
@@ -46,53 +43,58 @@ public class LocationClient {
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                for (Location location : locationResult.getLocations()) {
-                    if (location != null) {
-                        getFusedLocation();
-                    }
-                }
+                retrieveLocationCallback.onRetrieveLocation(locationResult.getLastLocation());
             }
         };
     }
 
     public void getLocation() {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
-                Log.i(TAG, "request permissions");
-            } else {
-                Log.i(TAG, "permissions already grunted");
-                getFusedLocation();
-            }
+        if (!checkPermission()) {
+            requestPermission();
+            return;
+        }
+
+        Log.i(TAG, "permissions already granted");
+        getFusedLocation();
+    }
+
+    private boolean checkPermission() {
+        return ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermission() {
+        Log.i(TAG, "request permissions");
+        ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
     }
 
     @SuppressLint("MissingPermission")
     private void getFusedLocation() {
-        fusedLocationClient.getLastLocation().addOnSuccessListener((Activity) context, location -> {
-            if (location != null) {
-                retrieveLocationCallback.onRetrieveLocation(location);
-            } else {
+        fusedLocationClient.getLastLocation().addOnSuccessListener(activity, location -> {
+            if (location == null) {
                 Log.i(TAG, "location == null");
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+                return;
             }
-        }).addOnCanceledListener(() -> {
-            Log.i(TAG, "location listener cancelled.");
-        }).addOnFailureListener((location) -> {
-            Log.i(TAG, "Location listener failed.");
-        });
+
+            retrieveLocationCallback.onRetrieveLocation(location);
+        }).addOnCanceledListener(() -> Log.i(TAG, "location listener cancelled."))
+                .addOnFailureListener((location) -> Log.i(TAG, "Location listener failed."));
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull int[] grantResults) {
-        if (requestCode == LocationClient.LOCATION_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getFusedLocation();
-            } else {
-                Toast.makeText(context, "Permission denied", Toast.LENGTH_SHORT).show();
-            }
+        if (requestCode != LocationClient.LOCATION_REQUEST) {
+            return;
+        }
+
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            getFusedLocation();
+        } else {
+            Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show();
         }
     }
 
     public interface RetrieveLocationCallback {
-        void onRetrieveLocation(Location location);
+        void onRetrieveLocation(@NonNull Location location);
     }
 }
