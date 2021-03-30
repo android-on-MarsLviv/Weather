@@ -1,9 +1,10 @@
 package com.example.weather;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -25,14 +26,14 @@ import java.net.URL;
 import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
-
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private TextView showWeatherView;
     private EditText editCityView;
     private Button weatherByCityButton;
 
-    private Context context;
+    private LocationClient locationClient;
+    private Location currentLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +46,13 @@ public class MainActivity extends AppCompatActivity {
 
         weatherByCityButton.setOnClickListener(this::onClickByCity);
 
-        context = this;
+        locationClient = new LocationClient(this, new LocationClient.RetrieveLocationCallback() {
+            @Override
+            public void onRetrieveLocation(@NonNull Location location) {
+                currentLocation = location;
+                Log.d(TAG, "curr latitude:" + currentLocation.getLatitude() + "  curr longitude:" + currentLocation.getLongitude());
+            }
+        });
     }
 
     private void onClickByCity(View view) {
@@ -56,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         final URL request;
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
-            notificationOnError(context, getText(R.string.error_wrong_city).toString());
+            notificationOnError(getText(R.string.error_wrong_city).toString());
             return;
         }
 
@@ -64,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
             request = buildRequestUrlWithCity(cityName);
             Log.d(TAG, String.valueOf(request));
         } catch (MalformedURLException e) {
-            notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
+            notificationOnError(getText(R.string.error_wrong_request).toString(), e);
             return;
         }
 
@@ -75,22 +82,22 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d(TAG, "run started");
 
-                String respond = null;
-                String temperature = null;
+                String respond;
+                String temperature;
                 try {
                     respond = doRequest(request);
                     if (TextUtils.isEmpty(respond)) {
-                        notificationOnError(context, getText(R.string.error_wrong_request).toString());
+                        notificationOnError(getText(R.string.error_wrong_request).toString());
                         return;
                     }
 
                     temperature = parseTemperature(respond);
                     if (TextUtils.isEmpty(temperature)) {
-                        notificationOnError(context, getText(R.string.error_wrong_request).toString());
+                        notificationOnError(getText(R.string.error_wrong_request).toString());
                         return;
                     }
                 } catch (IOException | JSONException e) {
-                    notificationOnError(context, getText(R.string.error_wrong_request).toString(), e);
+                    notificationOnError(getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
 
@@ -106,6 +113,17 @@ public class MainActivity extends AppCompatActivity {
     public void onClickByLocation(View view) {
         // todo: implement
         // https://trello.com/c/W4VxNHog
+        Log.d(TAG, "onClickByLocation start");
+
+        locationClient.getLocation();
+
+        Log.d(TAG, "onClickByLocation finish");
+    }
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        locationClient.onRequestPermissionsResult(requestCode, grantResults);
     }
 
     private void updateTemperatureView(String massage) {
@@ -166,14 +184,14 @@ public class MainActivity extends AppCompatActivity {
         return respond;
     }
 
-    private void notificationOnError(Context context, String notificationToUser) {
+    private void notificationOnError(String notificationToUser) {
         updateTemperatureView(getText(R.string.default_temperature_message).toString());
-        runOnUiThread(() -> Toast.makeText(context, notificationToUser, Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
     }
 
-    private void notificationOnError(Context context, String notificationToUser, Exception exception) {
+    private void notificationOnError(String notificationToUser, Exception exception) {
         updateTemperatureView(getText(R.string.default_temperature_message).toString());
-        runOnUiThread(() -> Toast.makeText(context, notificationToUser, Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
         exception.printStackTrace();
     }
 
