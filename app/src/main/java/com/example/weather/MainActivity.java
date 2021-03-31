@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                             notificationOnError(getText(R.string.error_wrong_request).toString());
                         }
                     });
-                } catch (IOException e/* | JSONException e*/) {
+                } catch (IOException e) {
                     notificationOnError(getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void doRequest(URL weatherEndpoint, RequestCallback callback) throws IOException {
-        Log.d(TAG, "doRequest callback start");
+        Log.d(TAG, "doRequest start");
         final String respond;
 
         InputStream stream = null;
@@ -166,13 +166,12 @@ public class MainActivity extends AppCompatActivity {
         try {
             connection = (HttpsURLConnection) weatherEndpoint.openConnection();
             connection.setRequestMethod("GET");
-            //connection.setReadTimeout(3000);
             connection.setReadTimeout(R.string.request_timeout);
             connection.connect();
 
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
-                respond = StreamUtils.streamToString(stream);       Log.d(TAG, "respond:" + respond);
+                respond = StreamUtils.streamToString(stream);
 
                 new Handler(Looper.getMainLooper()).post(() -> {
                     callback.onRequestSucceed(respond);
@@ -188,35 +187,7 @@ public class MainActivity extends AppCompatActivity {
                 connection.disconnect();
             }
         }
-        Log.d(TAG, "doRequest callback finish");
-    }
-
-    @Nullable
-    private String doRequest(URL weatherEndpoint) throws IOException {
-        Log.d(TAG, "doRequest start");
-        String respond = null;
-
-        InputStream stream = null;
-        HttpsURLConnection connection = null;
-
-        try {
-            connection = (HttpsURLConnection) weatherEndpoint.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setReadTimeout(3000);
-            connection.connect();
-
-            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
-                stream = connection.getInputStream();
-                respond = StreamUtils.streamToString(stream);
-            }
-        } finally {
-            StreamUtils.closeAll(stream);
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
         Log.d(TAG, "doRequest finish");
-        return respond;
     }
 
     private void notificationOnError(String notificationToUser) {
