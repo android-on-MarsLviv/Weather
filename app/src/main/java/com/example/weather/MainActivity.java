@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -82,8 +84,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d(TAG, "run started");
 
+                Map<String, String> weather;
                 String respond;
-                String temperature;
+
                 try {
                     respond = doRequest(request);
                     if (TextUtils.isEmpty(respond)) {
@@ -91,8 +94,8 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
-                    temperature = parseTemperature(respond);
-                    if (TextUtils.isEmpty(temperature)) {
+                    weather = parseWeather(respond);
+                    if (weather.isEmpty()) {
                         notificationOnError(getText(R.string.error_wrong_request).toString());
                         return;
                     }
@@ -101,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                updateTemperatureView(getString(R.string.template_temperature_message, temperature));
+                updateTemperatureView(getString(R.string.template_temperature_message1, weather.get("temperature"), weather.get("visibility"), weather.get("humidity"), weather.get("wind speed")));
 
                 Log.d(TAG, "run finish");
             }
@@ -146,14 +149,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Nullable
-    private String parseTemperature(String response) throws JSONException {
-        String temperature = null;
-
+    private Map<String, String> parseWeather(String response) throws JSONException {
         JSONObject json = new JSONObject(response);
         JSONObject main  = json.getJSONObject("main");
-        temperature = main.getString("temp");
+        JSONObject wind = json.getJSONObject("wind");
 
-        return temperature;
+        Map<String, String> weather = new HashMap<>();
+        weather.put("temperature", main.getString("temp"));
+        weather.put("humidity", main.getString("humidity"));
+        weather.put("visibility", json.getString("visibility"));
+        weather.put("wind speed", wind.getString("speed"));
+
+        return weather;
     }
 
     @Nullable
