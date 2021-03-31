@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                updateTemperatureView(getString(R.string.template_temperature_message1, weather.get("temperature"), weather.get("visibility"), weather.get("humidity"), weather.get("wind speed")));
+                updateTemperatureView(getString(R.string.template_temperature_message, weather.get("temperature"), weather.get("visibility"), weather.get("humidity"), weather.get("wind speed")));
 
                 Log.d(TAG, "run finish");
             }
