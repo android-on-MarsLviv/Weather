@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView showWeatherView;
     private EditText editCityView;
     private Button weatherByCityButton;
+    private Button weatherByLocationButton;
 
     private LocationClient locationClient;
     private Location currentLocation;
@@ -43,8 +44,10 @@ public class MainActivity extends AppCompatActivity {
         showWeatherView = findViewById(R.id.msg_temperature);
         editCityView = findViewById(R.id.msg_city);
         weatherByCityButton = findViewById(R.id.button_by_city);
+        weatherByLocationButton = findViewById(R.id.button_by_location);
 
         weatherByCityButton.setOnClickListener(this::onClickByCity);
+        weatherByLocationButton.setOnClickListener(this::onClickByLocation);
 
         locationClient = new LocationClient(this, new LocationClient.RetrieveLocationCallback() {
             @Override
