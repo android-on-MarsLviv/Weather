@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -85,26 +87,27 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d(TAG, "run started");
 
-                String respond;
-                String temperature;
                 try {
-                    respond = doRequest(request);
-                    if (TextUtils.isEmpty(respond)) {
-                        notificationOnError(getText(R.string.error_wrong_request).toString());
-                        return;
-                    }
+                    doRequest(request, new RequestCallback() {
+                        @Override
+                        public void onRequestSucceed(String respond) {
+                            try {
+                                String temperature = parseTemperature(respond);
+                                updateTemperatureView(getString(R.string.template_temperature_message, temperature));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
 
-                    temperature = parseTemperature(respond);
-                    if (TextUtils.isEmpty(temperature)) {
-                        notificationOnError(getText(R.string.error_wrong_request).toString());
-                        return;
-                    }
-                } catch (IOException | JSONException e) {
+                        @Override
+                        public void onRequestFailed() {
+                            notificationOnError(getText(R.string.error_wrong_request).toString());
+                        }
+                    });
+                } catch (IOException e/* | JSONException e*/) {
                     notificationOnError(getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
-
-                updateTemperatureView(getString(R.string.template_temperature_message, temperature));
 
                 Log.d(TAG, "run finish");
             }
@@ -114,13 +117,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickByLocation(View view) {
-        // todo: implement
-        // https://trello.com/c/W4VxNHog
-        Log.d(TAG, "onClickByLocation start");
-
         locationClient.getLocation();
-
-        Log.d(TAG, "onClickByLocation finish");
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -157,6 +154,41 @@ public class MainActivity extends AppCompatActivity {
         temperature = main.getString("temp");
 
         return temperature;
+    }
+
+    void doRequest(URL weatherEndpoint, RequestCallback callback) throws IOException {
+        Log.d(TAG, "doRequest callback start");
+        final String respond;
+
+        InputStream stream = null;
+        HttpsURLConnection connection = null;
+
+        try {
+            connection = (HttpsURLConnection) weatherEndpoint.openConnection();
+            connection.setRequestMethod("GET");
+            //connection.setReadTimeout(3000);
+            connection.setReadTimeout(R.string.request_timeout);
+            connection.connect();
+
+            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
+                stream = connection.getInputStream();
+                respond = StreamUtils.streamToString(stream);       Log.d(TAG, "respond:" + respond);
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    callback.onRequestSucceed(respond);
+                });
+            } else {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    callback.onRequestFailed();
+                });
+            }
+        } finally {
+            StreamUtils.closeAll(stream);
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        Log.d(TAG, "doRequest callback finish");
     }
 
     @Nullable
@@ -196,6 +228,11 @@ public class MainActivity extends AppCompatActivity {
         updateTemperatureView(getText(R.string.default_temperature_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
         exception.printStackTrace();
+    }
+
+    public interface RequestCallback {
+        void onRequestSucceed(String respond);
+        void onRequestFailed();
     }
 
 }
