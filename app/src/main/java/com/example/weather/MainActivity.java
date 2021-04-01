@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -84,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d(TAG, "run started");
 
-                Map<String, String> weather;
+                WeatherInfo weather;
                 String respond;
 
                 try {
@@ -95,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     weather = parseWeather(respond);
-                    if (weather.isEmpty()) {
+                    if (weather.isEmpty) {
                         notificationOnError(getText(R.string.error_wrong_request).toString());
                         return;
                     }
@@ -104,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                updateTemperatureView(getString(R.string.template_temperature_message, weather.get("temperature"), weather.get("visibility"), weather.get("humidity"), weather.get("wind speed")));
+                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWeendSpeed()));
 
                 Log.d(TAG, "run finish");
             }
@@ -149,16 +147,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Nullable
-    private Map<String, String> parseWeather(String response) throws JSONException {
+    private WeatherInfo parseWeather(String response) throws JSONException {
         JSONObject json = new JSONObject(response);
         JSONObject main  = json.getJSONObject("main");
         JSONObject wind = json.getJSONObject("wind");
 
-        Map<String, String> weather = new HashMap<>();
-        weather.put("temperature", main.getString("temp"));
-        weather.put("humidity", main.getString("humidity"));
-        weather.put("visibility", json.getString("visibility"));
-        weather.put("wind speed", wind.getString("speed"));
+        WeatherInfo weather = new WeatherInfo();
+        weather.setTemperature(main.getString("temp"));
+        weather.setHumidity(main.getString("humidity"));
+        weather.setVisibility(json.getString("visibility"));
+        weather.setWeendSpeed(wind.getString("speed"));
+        weather.isEmpty = false;
 
         return weather;
     }
@@ -192,12 +191,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void notificationOnError(String notificationToUser) {
-        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
     }
 
     private void notificationOnError(String notificationToUser, Exception exception) {
-        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
         exception.printStackTrace();
     }
