@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Temperature</string>
+    <string name="app_name">Weather</string>
     <string name="default_city">Lviv</string>
     <string name="template_weather_message">Today temperature: %s °C\nvisibility: %s meters\nhumidity: %s %%\nwind speed: %s m/s</string>
     <string name="default_weather_message">Today is </string>
