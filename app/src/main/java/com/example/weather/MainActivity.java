@@ -30,6 +30,8 @@ import javax.net.ssl.HttpsURLConnection;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static final int HTTP_REQUEST_TIMEOUT = 3000;
+
     private TextView showWeatherView;
     private EditText editCityView;
     private Button weatherByCityButton;
@@ -156,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         return temperature;
     }
 
-    void doRequest(URL weatherEndpoint, RequestCallback callback) throws IOException {
+    void doRequest(@NonNull URL weatherEndpoint, @NonNull RequestCallback callback) throws IOException {
         Log.d(TAG, "doRequest start");
         final String respond;
 
@@ -166,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             connection = (HttpsURLConnection) weatherEndpoint.openConnection();
             connection.setRequestMethod("GET");
-            connection.setReadTimeout(R.string.request_timeout);
+            connection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
             connection.connect();
 
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
