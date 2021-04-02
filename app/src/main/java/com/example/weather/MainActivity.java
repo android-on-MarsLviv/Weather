@@ -28,6 +28,13 @@ import javax.net.ssl.HttpsURLConnection;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static final String JSON_MAIN = "main";
+    private static final String JSON_WIND = "wind";
+    private static final String TEMPERATURE = "temp";
+    private static final String HUMIDITY = "humidity";
+    private static final String VISIBILITY = "visibility";
+    private static final String WIND_SPEED = "speed";
+
     private TextView showWeatherView;
     private EditText editCityView;
     private Button weatherByCityButton;
@@ -93,16 +100,12 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     weather = parseWeather(respond);
-                    if (weather.isEmpty) {
-                        notificationOnError(getText(R.string.error_wrong_request).toString());
-                        return;
-                    }
                 } catch (IOException | JSONException e) {
                     notificationOnError(getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
 
-                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWeendSpeed()));
+                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
 
                 Log.d(TAG, "run finish");
             }
@@ -146,20 +149,12 @@ public class MainActivity extends AppCompatActivity {
         return new URL(builtUri.toString());
     }
 
-    @Nullable
     private WeatherInfo parseWeather(String response) throws JSONException {
         JSONObject json = new JSONObject(response);
-        JSONObject main  = json.getJSONObject("main");
-        JSONObject wind = json.getJSONObject("wind");
+        JSONObject main  = json.getJSONObject(JSON_MAIN);
+        JSONObject wind = json.getJSONObject(JSON_WIND);
 
-        WeatherInfo weather = new WeatherInfo();
-        weather.setTemperature(main.getString("temp"));
-        weather.setHumidity(main.getString("humidity"));
-        weather.setVisibility(json.getString("visibility"));
-        weather.setWeendSpeed(wind.getString("speed"));
-        weather.isEmpty = false;
-
-        return weather;
+        return new WeatherInfo(main.getString(TEMPERATURE), main.getString(HUMIDITY), json.getString(VISIBILITY), wind.getString(WIND_SPEED));
     }
 
     @Nullable

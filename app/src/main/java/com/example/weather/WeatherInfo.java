@@ -1,27 +1,16 @@
 package com.example.weather;
 
 public class WeatherInfo {
-    private String temperature = "";
-    private String humidity = "";
-    private String visibility = "";
-    private String weendSpeed = "";
+    private final String temperature;
+    private final String humidity;
+    private final String visibility;
+    private final String windSpeed;
 
-    public boolean isEmpty = true;
-
-    public void setTemperature(String temperature) {
+    WeatherInfo(String temperature, String humidity, String visibility, String windSpeed) {
         this.temperature = temperature;
-    }
-
-    public void setHumidity(String humidity) {
         this.humidity = humidity;
-    }
-
-    public void setVisibility(String visibility) {
         this.visibility = visibility;
-    }
-
-    public void setWeendSpeed(String weendSpeed) {
-        this.weendSpeed = weendSpeed;
+        this.windSpeed = windSpeed;
     }
 
     public String getTemperature() {
@@ -36,7 +25,7 @@ public class WeatherInfo {
         return visibility;
     }
 
-    public String getWeendSpeed() {
-        return weendSpeed;
+    public String getWindSpeed() {
+        return windSpeed;
     }
 }
