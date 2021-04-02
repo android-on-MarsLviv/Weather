@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Optional;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -100,13 +101,13 @@ public class MainActivity extends AppCompatActivity {
                     doRequest(request, new RequestCallback() {
                         @Override
                         public void onRequestSucceed(String respond) {
-                            //WeatherInfo weather;
-                            try {
-                                WeatherInfo weather = parseWeather(respond);
-                                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                            Optional<WeatherInfo> weatherInfo = parseWeather(respond);
+                            if (!weatherInfo.isPresent()) {
+                                Log.d(TAG, "weatherInfo is empty");
+                                return;
                             }
+                            WeatherInfo weather = weatherInfo.get();
+                            updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
                         }
 
                         @Override
@@ -157,12 +158,19 @@ public class MainActivity extends AppCompatActivity {
         return new URL(builtUri.toString());
     }
 
-    private WeatherInfo parseWeather(String response) throws JSONException {
-        JSONObject json = new JSONObject(response);
-        JSONObject main  = json.getJSONObject(JSON_MAIN);
-        JSONObject wind = json.getJSONObject(JSON_WIND);
+    private Optional<WeatherInfo> parseWeather(String response) {
+        Optional<WeatherInfo> weatherInfo;
+        try {
+            JSONObject json = new JSONObject(response);
+            JSONObject main = json.getJSONObject(JSON_MAIN);
+            JSONObject wind = json.getJSONObject(JSON_WIND);
+            weatherInfo = Optional.of(new WeatherInfo(main.getString(TEMPERATURE), main.getString(HUMIDITY), json.getString(VISIBILITY), wind.getString(WIND_SPEED)));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            weatherInfo = Optional.empty();
+        }
 
-        return new WeatherInfo(main.getString(TEMPERATURE), main.getString(HUMIDITY), json.getString(VISIBILITY), wind.getString(WIND_SPEED));
+        return weatherInfo;
     }
 
     void doRequest(@NonNull URL weatherEndpoint, @NonNull RequestCallback callback) throws IOException {
