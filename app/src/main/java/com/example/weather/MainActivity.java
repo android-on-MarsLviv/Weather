@@ -32,6 +32,13 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int HTTP_REQUEST_TIMEOUT = 3000;
 
+    private static final String JSON_MAIN = "main";
+    private static final String JSON_WIND = "wind";
+    private static final String TEMPERATURE = "temp";
+    private static final String HUMIDITY = "humidity";
+    private static final String VISIBILITY = "visibility";
+    private static final String WIND_SPEED = "speed";
+
     private TextView showWeatherView;
     private EditText editCityView;
     private Button weatherByCityButton;
@@ -93,9 +100,10 @@ public class MainActivity extends AppCompatActivity {
                     doRequest(request, new RequestCallback() {
                         @Override
                         public void onRequestSucceed(String respond) {
+                            //WeatherInfo weather;
                             try {
-                                String temperature = parseTemperature(respond);
-                                updateTemperatureView(getString(R.string.template_temperature_message, temperature));
+                                WeatherInfo weather = parseWeather(respond);
+                                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -149,15 +157,12 @@ public class MainActivity extends AppCompatActivity {
         return new URL(builtUri.toString());
     }
 
-    @Nullable
-    private String parseTemperature(String response) throws JSONException {
-        String temperature = null;
-
+    private WeatherInfo parseWeather(String response) throws JSONException {
         JSONObject json = new JSONObject(response);
-        JSONObject main  = json.getJSONObject("main");
-        temperature = main.getString("temp");
+        JSONObject main  = json.getJSONObject(JSON_MAIN);
+        JSONObject wind = json.getJSONObject(JSON_WIND);
 
-        return temperature;
+        return new WeatherInfo(main.getString(TEMPERATURE), main.getString(HUMIDITY), json.getString(VISIBILITY), wind.getString(WIND_SPEED));
     }
 
     void doRequest(@NonNull URL weatherEndpoint, @NonNull RequestCallback callback) throws IOException {
@@ -195,12 +200,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void notificationOnError(String notificationToUser) {
-        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
     }
 
     private void notificationOnError(String notificationToUser, Exception exception) {
-        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
         exception.printStackTrace();
     }
