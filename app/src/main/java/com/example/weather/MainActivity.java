@@ -28,6 +28,13 @@ import javax.net.ssl.HttpsURLConnection;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static final String JSON_MAIN = "main";
+    private static final String JSON_WIND = "wind";
+    private static final String TEMPERATURE = "temp";
+    private static final String HUMIDITY = "humidity";
+    private static final String VISIBILITY = "visibility";
+    private static final String WIND_SPEED = "speed";
+
     private TextView showWeatherView;
     private EditText editCityView;
     private Button weatherByCityButton;
@@ -82,8 +89,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d(TAG, "run started");
 
+                WeatherInfo weather;
                 String respond;
-                String temperature;
+
                 try {
                     respond = doRequest(request);
                     if (TextUtils.isEmpty(respond)) {
@@ -91,17 +99,13 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
-                    temperature = parseTemperature(respond);
-                    if (TextUtils.isEmpty(temperature)) {
-                        notificationOnError(getText(R.string.error_wrong_request).toString());
-                        return;
-                    }
+                    weather = parseWeather(respond);
                 } catch (IOException | JSONException e) {
                     notificationOnError(getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
 
-                updateTemperatureView(getString(R.string.template_temperature_message, temperature));
+                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
 
                 Log.d(TAG, "run finish");
             }
@@ -145,15 +149,12 @@ public class MainActivity extends AppCompatActivity {
         return new URL(builtUri.toString());
     }
 
-    @Nullable
-    private String parseTemperature(String response) throws JSONException {
-        String temperature = null;
-
+    private WeatherInfo parseWeather(String response) throws JSONException {
         JSONObject json = new JSONObject(response);
-        JSONObject main  = json.getJSONObject("main");
-        temperature = main.getString("temp");
+        JSONObject main  = json.getJSONObject(JSON_MAIN);
+        JSONObject wind = json.getJSONObject(JSON_WIND);
 
-        return temperature;
+        return new WeatherInfo(main.getString(TEMPERATURE), main.getString(HUMIDITY), json.getString(VISIBILITY), wind.getString(WIND_SPEED));
     }
 
     @Nullable
@@ -185,12 +186,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void notificationOnError(String notificationToUser) {
-        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
     }
 
     private void notificationOnError(String notificationToUser, Exception exception) {
-        updateTemperatureView(getText(R.string.default_temperature_message).toString());
+        updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
         exception.printStackTrace();
     }

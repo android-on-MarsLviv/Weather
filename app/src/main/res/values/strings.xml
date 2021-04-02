@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">Temperature</string>
+    <string name="app_name">Weather</string>
     <string name="default_city">Lviv</string>
-    <string name="template_temperature_message">Today is %s °C</string>
-    <string name="default_temperature_message">Today is </string>
+    <string name="template_weather_message">Today temperature: %s °C\nvisibility: %s meters\nhumidity: %s %%\nwind speed: %s m/s</string>
+    <string name="default_weather_message">Today is </string>
     <string name="btn_city_title">Temperature by City</string>
     <string name="btn_location_title">Temperature by Location</string>
     <string name="msg_wrong_city">Wrong city</string>
