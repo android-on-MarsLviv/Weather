@@ -119,6 +119,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickByLocation(View view) {
+        // todo: implement
+        // https://trello.com/c/W4VxNHog
         locationClient.getLocation();
     }
 
