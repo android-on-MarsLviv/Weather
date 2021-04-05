@@ -159,23 +159,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private Optional<WeatherInfo> parseWeather(String response) {
-        Optional<WeatherInfo> weatherInfo;
         try {
             JSONObject json = new JSONObject(response);
             JSONObject main = json.getJSONObject(JSON_MAIN);
             JSONObject wind = json.getJSONObject(JSON_WIND);
-            weatherInfo = Optional.of(new WeatherInfo(main.getString(TEMPERATURE), main.getString(HUMIDITY), json.getString(VISIBILITY), wind.getString(WIND_SPEED)));
+            return Optional.of(new WeatherInfo(
+                    main.getString(TEMPERATURE),
+                    main.getString(HUMIDITY),
+                    json.getString(VISIBILITY),
+                    wind.getString(WIND_SPEED)));
         } catch (JSONException e) {
             e.printStackTrace();
-            weatherInfo = Optional.empty();
         }
 
-        return weatherInfo;
+        return Optional.empty();
     }
 
     void doRequest(@NonNull URL weatherEndpoint, @NonNull RequestCallback callback) throws IOException {
         Log.d(TAG, "doRequest start");
-        final String respond;
 
         InputStream stream = null;
         HttpsURLConnection connection = null;
@@ -188,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
-                respond = StreamUtils.streamToString(stream);
+                String respond = StreamUtils.streamToString(stream);
 
                 new Handler(Looper.getMainLooper()).post(() -> {
                     callback.onRequestSucceed(respond);
@@ -219,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public interface RequestCallback {
-        void onRequestSucceed(String respond);
+        void onRequestSucceed(@NonNull String respond);
         void onRequestFailed();
     }
 
