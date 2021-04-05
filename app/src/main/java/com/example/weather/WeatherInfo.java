@@ -25,7 +25,5 @@ public class WeatherInfo {
         return visibility;
     }
 
-    public String getWindSpeed() {
-        return windSpeed;
-    }
+    public String getWindSpeed() { return windSpeed;  }
 }

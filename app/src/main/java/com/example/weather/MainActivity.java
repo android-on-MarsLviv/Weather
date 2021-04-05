@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -22,11 +24,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Optional;
 
 import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    private static final int HTTP_REQUEST_TIMEOUT = 3000;
 
     private static final String JSON_MAIN = "main";
     private static final String JSON_WIND = "wind";
@@ -38,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView showWeatherView;
     private EditText editCityView;
     private Button weatherByCityButton;
+    private Button weatherByLocationButton;
 
     private LocationClient locationClient;
     private Location currentLocation;
@@ -50,8 +56,10 @@ public class MainActivity extends AppCompatActivity {
         showWeatherView = findViewById(R.id.msg_temperature);
         editCityView = findViewById(R.id.msg_city);
         weatherByCityButton = findViewById(R.id.button_by_city);
+        weatherByLocationButton = findViewById(R.id.button_by_location);
 
         weatherByCityButton.setOnClickListener(this::onClickByCity);
+        weatherByLocationButton.setOnClickListener(this::onClickByLocation);
 
         locationClient = new LocationClient(this, new LocationClient.RetrieveLocationCallback() {
             @Override
@@ -89,23 +97,28 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d(TAG, "run started");
 
-                WeatherInfo weather;
-                String respond;
-
                 try {
-                    respond = doRequest(request);
-                    if (TextUtils.isEmpty(respond)) {
-                        notificationOnError(getText(R.string.error_wrong_request).toString());
-                        return;
-                    }
+                    doRequest(request, new RequestCallback() {
+                        @Override
+                        public void onRequestSucceed(String respond) {
+                            Optional<WeatherInfo> weatherInfo = parseWeather(respond);
+                            if (!weatherInfo.isPresent()) {
+                                Log.d(TAG, "weatherInfo is empty");
+                                return;
+                            }
+                            WeatherInfo weather = weatherInfo.get();
+                            updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
+                        }
 
-                    weather = parseWeather(respond);
-                } catch (IOException | JSONException e) {
+                        @Override
+                        public void onRequestFailed() {
+                            notificationOnError(getText(R.string.error_wrong_request).toString());
+                        }
+                    });
+                } catch (IOException e) {
                     notificationOnError(getText(R.string.error_wrong_request).toString(), e);
                     return;
                 }
-
-                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
 
                 Log.d(TAG, "run finish");
             }
@@ -117,11 +130,7 @@ public class MainActivity extends AppCompatActivity {
     public void onClickByLocation(View view) {
         // todo: implement
         // https://trello.com/c/W4VxNHog
-        Log.d(TAG, "onClickByLocation start");
-
         locationClient.getLocation();
-
-        Log.d(TAG, "onClickByLocation finish");
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -149,18 +158,25 @@ public class MainActivity extends AppCompatActivity {
         return new URL(builtUri.toString());
     }
 
-    private WeatherInfo parseWeather(String response) throws JSONException {
-        JSONObject json = new JSONObject(response);
-        JSONObject main  = json.getJSONObject(JSON_MAIN);
-        JSONObject wind = json.getJSONObject(JSON_WIND);
+    private Optional<WeatherInfo> parseWeather(String response) {
+        try {
+            JSONObject json = new JSONObject(response);
+            JSONObject main = json.getJSONObject(JSON_MAIN);
+            JSONObject wind = json.getJSONObject(JSON_WIND);
+            return Optional.of(new WeatherInfo(
+                    main.getString(TEMPERATURE),
+                    main.getString(HUMIDITY),
+                    json.getString(VISIBILITY),
+                    wind.getString(WIND_SPEED)));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-        return new WeatherInfo(main.getString(TEMPERATURE), main.getString(HUMIDITY), json.getString(VISIBILITY), wind.getString(WIND_SPEED));
+        return Optional.empty();
     }
 
-    @Nullable
-    private String doRequest(URL weatherEndpoint) throws IOException {
+    void doRequest(@NonNull URL weatherEndpoint, @NonNull RequestCallback callback) throws IOException {
         Log.d(TAG, "doRequest start");
-        String respond = null;
 
         InputStream stream = null;
         HttpsURLConnection connection = null;
@@ -168,12 +184,20 @@ public class MainActivity extends AppCompatActivity {
         try {
             connection = (HttpsURLConnection) weatherEndpoint.openConnection();
             connection.setRequestMethod("GET");
-            connection.setReadTimeout(3000);
+            connection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
             connection.connect();
 
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
-                respond = StreamUtils.streamToString(stream);
+                String respond = StreamUtils.streamToString(stream);
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    callback.onRequestSucceed(respond);
+                });
+            } else {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    callback.onRequestFailed();
+                });
             }
         } finally {
             StreamUtils.closeAll(stream);
@@ -182,7 +206,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         Log.d(TAG, "doRequest finish");
-        return respond;
     }
 
     private void notificationOnError(String notificationToUser) {
@@ -194,6 +217,11 @@ public class MainActivity extends AppCompatActivity {
         updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
         exception.printStackTrace();
+    }
+
+    public interface RequestCallback {
+        void onRequestSucceed(@NonNull String respond);
+        void onRequestFailed();
     }
 
 }
