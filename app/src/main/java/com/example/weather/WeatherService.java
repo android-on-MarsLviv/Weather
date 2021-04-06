@@ -41,14 +41,14 @@ public class WeatherService extends Service {
         return binder;
     }
 
-    public void getCurrentWeatherInfo(@NonNull String cityName, Resources resources, @NonNull WeatherInfoCallback callback) {
+    public void getCurrentWeatherInfo(@NonNull String cityName, @NonNull Resources resources, WeatherServiceCallback callback) {
         Log.d(TAG, "getCurrentWeatherInfo: City - " + cityName);
 
         HandleRequest handleRequest = new HandleRequest(cityName, resources, callback);
         executorService.execute(handleRequest);
     }
 
-    public void getCurrentWeatherInfo(@NonNull Location location, @NonNull Resources resources, @NonNull WeatherInfoCallback callback) {
+    public void getCurrentWeatherInfo(@NonNull Location location, @NonNull Resources resources, WeatherServiceCallback callback) {
         Log.d(TAG, "getCurrentWeatherInfo: Location");
 
     }
@@ -56,9 +56,9 @@ public class WeatherService extends Service {
     private class HandleRequest implements Runnable {
         String cityName;
         Resources resources;
-        WeatherInfoCallback callback;
+        WeatherServiceCallback callback;
 
-        public HandleRequest(@NonNull String cityName, @NonNull Resources resources, @NonNull WeatherInfoCallback callback) {
+        public HandleRequest(@NonNull String cityName, @NonNull Resources resources, WeatherServiceCallback callback) {
             this.cityName = cityName;
             this.resources = resources;
             this.callback = callback;
@@ -71,6 +71,7 @@ public class WeatherService extends Service {
             try {
                 request = weatherRequest.buildRequestUrl(cityName);
             } catch (MalformedURLException e) {
+                Log.d(TAG, "couldn't build Url");
                 e.printStackTrace();
                 return;
             }
@@ -78,7 +79,7 @@ public class WeatherService extends Service {
             try {
                 weatherRequest.doRequest(request, new WeatherRequest.RequestCallback() {
                     @Override
-                    public void onRequestSucceed(String respond) {
+                    public void onRequestSucceed(@NonNull String respond) {
                         Optional<WeatherInfo> weatherInfo = weatherRequest.parseWeather(respond);
                         if (!weatherInfo.isPresent()) {
                             Log.d(TAG, "weatherInfo is empty");
@@ -101,7 +102,7 @@ public class WeatherService extends Service {
         }
     }
 
-    public interface WeatherInfoCallback {
+    public interface WeatherServiceCallback {
         void onWeatherInfoObtained(Optional<WeatherInfo> weatherInfo);
         void onError(@NonNull Error errorCode);
     }

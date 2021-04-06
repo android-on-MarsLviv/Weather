@@ -29,13 +29,13 @@ public class WeatherRequest {
     private static final String VISIBILITY = "visibility";
     private static final String WIND_SPEED = "speed";
 
-    Resources resources;
+    private final Resources resources;
 
-    WeatherRequest (Resources resources) {
+    public WeatherRequest (@NonNull Resources resources) {
         this.resources = resources;
     }
 
-    public URL buildRequestUrl(String cityName) throws MalformedURLException {
+    public URL buildRequestUrl(@NonNull String cityName) throws MalformedURLException {
         Uri builtUri = Uri.parse(resources.getText(R.string.weather_api_entry_point).toString())
                 .buildUpon()
                 .appendQueryParameter("q", cityName)
@@ -45,7 +45,7 @@ public class WeatherRequest {
         return new URL(builtUri.toString());
     }
 
-    public URL buildRequestUrl(Location location) throws MalformedURLException {
+    public URL buildRequestUrl(@NonNull Location location) throws MalformedURLException {
         Uri builtUri = Uri.parse(resources.getText(R.string.weather_api_entry_point).toString())
                 .buildUpon()
                 .appendQueryParameter("lat", String.valueOf(location.getLatitude()))
@@ -71,7 +71,6 @@ public class WeatherRequest {
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
                 String respond = StreamUtils.streamToString(stream);
-
                 callback.onRequestSucceed(respond);
             } else {
                 callback.onRequestFailed();
@@ -85,7 +84,7 @@ public class WeatherRequest {
         Log.d(TAG, "doRequest finish");
     }
 
-    public Optional<WeatherInfo> parseWeather(String response) {
+    public Optional<WeatherInfo> parseWeather(@NonNull String response) {
         try {
             JSONObject json = new JSONObject(response);
             JSONObject main = json.getJSONObject(JSON_MAIN);

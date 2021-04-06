@@ -1,7 +1,6 @@
 package com.example.weather;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ComponentName;
@@ -57,6 +56,20 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private final ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
+            weatherService = binder.getService();
+            weatherServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            weatherServiceBound = false;
+        }
+    };
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -73,20 +86,6 @@ public class MainActivity extends AppCompatActivity {
         weatherServiceBound = false;
     }
 
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
-            weatherService = binder.getService();
-            weatherServiceBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            weatherServiceBound = false;
-        }
-    };
-
     private void onClickByCity(View view) {
         // TODO: keep this button disabled while current request not finished
         // https://trello.com/c/SFB76xJc
@@ -97,7 +96,8 @@ public class MainActivity extends AppCompatActivity {
             notificationOnError(getText(R.string.error_wrong_city).toString());
             return;
         }
-        weatherService.getCurrentWeatherInfo(cityName, getResources(), new WeatherService.WeatherInfoCallback() {
+
+        weatherService.getCurrentWeatherInfo(cityName, getResources(), new WeatherService.WeatherServiceCallback() {
             @Override
             public void onWeatherInfoObtained(Optional<WeatherInfo> weatherInfo) {
                 if (!weatherInfo.isPresent()) {
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         locationClient.onRequestPermissionsResult(requestCode, grantResults);
     }
 
-    private void updateTemperatureView(String massage) {
+    private void updateTemperatureView(@NonNull String massage) {
         showWeatherView.post(new Runnable() {
             @Override
             public void run() {
@@ -138,14 +138,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void notificationOnError(String notificationToUser) {
+    private void notificationOnError(@NonNull String notificationToUser) {
         updateTemperatureView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
-    }
-
-    private void notificationOnError(String notificationToUser, Exception exception) {
-        updateTemperatureView(getText(R.string.default_weather_message).toString());
-        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
-        exception.printStackTrace();
     }
 }
