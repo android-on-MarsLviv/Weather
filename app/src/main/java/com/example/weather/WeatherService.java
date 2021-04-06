@@ -9,6 +9,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import java.util.Optional;
+
 public class WeatherService extends Service {
     private static final String TAG = WeatherService.class.getSimpleName();
 
@@ -26,8 +28,14 @@ public class WeatherService extends Service {
     }
 
     public void getCurrentWeatherInfo(@NonNull String cityName, @NonNull WeatherInfoCallback callback) {
-        Log.d(TAG, "getCurrentWeatherInfo: City");
-
+        Log.d(TAG, "getCurrentWeatherInfo: City - " + cityName);
+        //callback.onRequestSucceed(respond)
+        callback.onWeatherInfoObtained(Optional.of(new WeatherInfo(
+                                                "10",
+                                                "99",
+                                                "222",
+                                                "0"))
+        );
     }
 
     public void getCurrentWeatherInfo(@NonNull Location location, @NonNull WeatherInfoCallback callback) {
@@ -36,7 +44,7 @@ public class WeatherService extends Service {
     }
 
     public interface WeatherInfoCallback {
-        void onWeatherInfoObtained(@NonNull WeatherInfo info);
+        void onWeatherInfoObtained(Optional<WeatherInfo> weatherInfo);
         void onError(@NonNull Error errorCode);
     }
 }

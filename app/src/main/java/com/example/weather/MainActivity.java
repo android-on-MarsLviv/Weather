@@ -4,10 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
@@ -48,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
     private LocationClient locationClient;
     private Location currentLocation;
 
+    WeatherService weatherService;
+    boolean weatherServiceBound = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,12 +78,66 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        Intent intent = new Intent(this, WeatherService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        unbindService(connection);
+        weatherServiceBound = false;
+    }
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
+            weatherService = binder.getService();
+            weatherServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            weatherServiceBound = false;
+        }
+    };
+
     private void onClickByCity(View view) {
         // TODO: keep this button disabled while current request not finished
         // https://trello.com/c/SFB76xJc
         Log.d(TAG, "onClick start");
+        // Service
+        String cityName = editCityView.getText().toString();
+        if (TextUtils.isEmpty(cityName)) {
+            notificationOnError(getText(R.string.error_wrong_city).toString());
+            return;
+        }
+        weatherService.getCurrentWeatherInfo(cityName, new WeatherService.WeatherInfoCallback() {
+            @Override
+            public void onWeatherInfoObtained(Optional<WeatherInfo> weatherInfo) {
+                if (!weatherInfo.isPresent()) {
+                    Log.d(TAG, "weatherInfo is empty");
+                    return;
+                }
+                WeatherInfo weather = weatherInfo.get();
+                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
+            }
 
-        final URL request;
+            @Override
+            public void onError(@NonNull Error errorCode) {
+                notificationOnError(getText(R.string.error_wrong_request).toString());
+            }
+        });
+
+        // </> Service
+
+        /*final URL request;
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
             notificationOnError(getText(R.string.error_wrong_city).toString());
@@ -122,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.d(TAG, "run finish");
             }
-        }).start();
+        }).start();*/
 
         Log.d(TAG, "onClick finish");
     }
