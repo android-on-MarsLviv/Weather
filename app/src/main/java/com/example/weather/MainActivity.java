@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
             notificationOnError(getText(R.string.error_wrong_city).toString());
             return;
         }
-        weatherService.getCurrentWeatherInfo(cityName, new WeatherService.WeatherInfoCallback() {
+        weatherService.getCurrentWeatherInfo(cityName, getResources(), new WeatherService.WeatherInfoCallback() {
             @Override
             public void onWeatherInfoObtained(Optional<WeatherInfo> weatherInfo) {
                 if (!weatherInfo.isPresent()) {

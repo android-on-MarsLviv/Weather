@@ -2,6 +2,7 @@ package com.example.weather;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
@@ -27,7 +28,7 @@ public class WeatherService extends Service {
         return binder;
     }
 
-    public void getCurrentWeatherInfo(@NonNull String cityName, @NonNull WeatherInfoCallback callback) {
+    public void getCurrentWeatherInfo(@NonNull String cityName, Resources resources, @NonNull WeatherInfoCallback callback) {
         Log.d(TAG, "getCurrentWeatherInfo: City - " + cityName);
         //callback.onRequestSucceed(respond)
         callback.onWeatherInfoObtained(Optional.of(new WeatherInfo(
@@ -38,7 +39,7 @@ public class WeatherService extends Service {
         );
     }
 
-    public void getCurrentWeatherInfo(@NonNull Location location, @NonNull WeatherInfoCallback callback) {
+    public void getCurrentWeatherInfo(@NonNull Location location, Resources resources, @NonNull WeatherInfoCallback callback) {
         Log.d(TAG, "getCurrentWeatherInfo: Location");
 
     }
