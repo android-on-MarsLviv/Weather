@@ -29,28 +29,28 @@ public class WeatherRequest {
     private static final String VISIBILITY = "visibility";
     private static final String WIND_SPEED = "speed";
 
-    private final Resources resources;
+    private final WeatherRequestData weatherRequestData;
 
-    public WeatherRequest (@NonNull Resources resources) {
-        this.resources = resources;
+    public WeatherRequest(@NonNull WeatherRequestData weatherRequestData) {
+        this.weatherRequestData = weatherRequestData;
     }
 
-    public URL buildRequestUrl(@NonNull String cityName) throws MalformedURLException {
-        Uri builtUri = Uri.parse(resources.getText(R.string.weather_api_entry_point).toString())
+    public URL buildRequestUrlByCity() throws MalformedURLException {
+        Uri builtUri = Uri.parse(weatherRequestData.getWeatherApiEntryPoint())
                 .buildUpon()
-                .appendQueryParameter("q", cityName)
-                .appendQueryParameter("appid", resources.getText(R.string.weather_api_key).toString())
+                .appendQueryParameter("q", weatherRequestData.getCityName())
+                .appendQueryParameter("appid", weatherRequestData.getWeatherApiKey())
                 .appendQueryParameter("units", "metric")
                 .build();
         return new URL(builtUri.toString());
     }
 
-    public URL buildRequestUrl(@NonNull Location location) throws MalformedURLException {
-        Uri builtUri = Uri.parse(resources.getText(R.string.weather_api_entry_point).toString())
+    public URL buildRequestUrlByLocation() throws MalformedURLException {
+        Uri builtUri = Uri.parse(weatherRequestData.getWeatherApiEntryPoint())
                 .buildUpon()
-                .appendQueryParameter("lat", String.valueOf(location.getLatitude()))
-                .appendQueryParameter("lon", String.valueOf(location.getLongitude()))
-                .appendQueryParameter("appid", resources.getText(R.string.weather_api_key).toString())
+                .appendQueryParameter("lat", String.valueOf(weatherRequestData.getLocation().getLatitude()))
+                .appendQueryParameter("lon", String.valueOf(weatherRequestData.getLocation().getLongitude()))
+                .appendQueryParameter("appid", weatherRequestData.getWeatherApiKey())
                 .appendQueryParameter("units", "metric")
                 .build();
         return new URL(builtUri.toString());

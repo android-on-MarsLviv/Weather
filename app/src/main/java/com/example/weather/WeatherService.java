@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 public class WeatherService extends Service {
     private static final String TAG = WeatherService.class.getSimpleName();
 
-    ExecutorService executorService;
+    private ExecutorService executorService;
 
     private final IBinder binder = new WeatherBinder();
 
@@ -41,10 +41,10 @@ public class WeatherService extends Service {
         return binder;
     }
 
-    public void getCurrentWeatherInfo(@NonNull String cityName, @NonNull Resources resources, WeatherServiceCallback callback) {
-        Log.d(TAG, "getCurrentWeatherInfo: City - " + cityName);
+    public void getCurrentWeatherInfo(@NonNull WeatherRequestData weatherRequestData, WeatherServiceCallback callback) {
+        Log.d(TAG, "getCurrentWeatherInfo: City - " + weatherRequestData.getCityName());
 
-        HandleRequest handleRequest = new HandleRequest(cityName, resources, callback);
+        HandleRequest handleRequest = new HandleRequest(weatherRequestData, callback);
         executorService.execute(handleRequest);
     }
 
@@ -54,22 +54,20 @@ public class WeatherService extends Service {
     }
 
     private class HandleRequest implements Runnable {
-        String cityName;
-        Resources resources;
+        WeatherRequestData weatherRequestData;
         WeatherServiceCallback callback;
 
-        public HandleRequest(@NonNull String cityName, @NonNull Resources resources, WeatherServiceCallback callback) {
-            this.cityName = cityName;
-            this.resources = resources;
+        public HandleRequest(@NonNull WeatherRequestData weatherRequestData, WeatherServiceCallback callback) {
+            this.weatherRequestData = weatherRequestData;
             this.callback = callback;
         }
 
         public void run() {
-            WeatherRequest weatherRequest = new WeatherRequest(resources);
+            WeatherRequest weatherRequest = new WeatherRequest(weatherRequestData);
             final URL request;
 
             try {
-                request = weatherRequest.buildRequestUrl(cityName);
+                request = weatherRequest.buildRequestUrlByCity();
             } catch (MalformedURLException e) {
                 Log.d(TAG, "couldn't build Url");
                 e.printStackTrace();
