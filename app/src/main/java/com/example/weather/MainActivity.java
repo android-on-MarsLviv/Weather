@@ -31,8 +31,20 @@ public class MainActivity extends AppCompatActivity {
     private LocationClient locationClient;
     private Location currentLocation;
 
-    WeatherService weatherService;
-    boolean weatherServiceBound = false;
+    private WeatherService weatherService;
+
+    private final ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
+            weatherService = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            weatherService = null;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,20 +68,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private final ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
-            weatherService = binder.getService();
-            weatherServiceBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            weatherServiceBound = false;
-        }
-    };
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -83,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
 
         unbindService(connection);
-        weatherServiceBound = false;
+        weatherService = null;
     }
 
     private void onClickByCity(View view) {
@@ -99,13 +97,8 @@ public class MainActivity extends AppCompatActivity {
 
         weatherService.getCurrentWeatherInfo(cityName, getResources(), new WeatherService.WeatherServiceCallback() {
             @Override
-            public void onWeatherInfoObtained(Optional<WeatherInfo> weatherInfo) {
-                if (!weatherInfo.isPresent()) {
-                    Log.d(TAG, "weatherInfo is empty");
-                    return;
-                }
-                WeatherInfo weather = weatherInfo.get();
-                updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
+            public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
+                updateTemperatureView(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
             }
 
             @Override

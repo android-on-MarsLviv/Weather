@@ -86,8 +86,7 @@ public class WeatherService extends Service {
                             return;
                         }
                         WeatherInfo weather = weatherInfo.get();
-
-                        callback.onWeatherInfoObtained(Optional.of(weather));
+                        callback.onWeatherInfoObtained(weather);
                     }
 
                     @Override
@@ -103,7 +102,7 @@ public class WeatherService extends Service {
     }
 
     public interface WeatherServiceCallback {
-        void onWeatherInfoObtained(Optional<WeatherInfo> weatherInfo);
+        void onWeatherInfoObtained(WeatherInfo weatherInfo);
         void onError(@NonNull Error errorCode);
     }
 }
