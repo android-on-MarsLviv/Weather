@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        weatherService.getCurrentWeatherInfo(new WeatherRequestData(cityName, getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
+        weatherService.getCurrentWeatherInfo(new WeatherRequest(cityName, getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
                                             , new WeatherService.WeatherServiceCallback() {
             @Override
             public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {

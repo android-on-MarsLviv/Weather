@@ -1,108 +1,47 @@
 package com.example.weather;
 
-import android.content.res.Resources;
 import android.location.Location;
-import android.net.Uri;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Optional;
-
-import javax.net.ssl.HttpsURLConnection;
+import androidx.annotation.Nullable;
 
 public class WeatherRequest {
-    private static final String TAG = WeatherRequest.class.getSimpleName();
-    private static final int HTTP_REQUEST_TIMEOUT = 3000;
+    private final String cityName;
+    private final Location location;
+    private final String weatherApiKey;
+    private final String weatherApiEntryPoint;
 
-    private static final String JSON_MAIN = "main";
-    private static final String JSON_WIND = "wind";
-    private static final String TEMPERATURE = "temp";
-    private static final String HUMIDITY = "humidity";
-    private static final String VISIBILITY = "visibility";
-    private static final String WIND_SPEED = "speed";
-
-    private final WeatherRequestData weatherRequestData;
-
-    public WeatherRequest(@NonNull WeatherRequestData weatherRequestData) {
-        this.weatherRequestData = weatherRequestData;
+    WeatherRequest(@NonNull String cityName, @NonNull String weatherApiKey, @NonNull String weatherApiEntryPoint) {
+        this.cityName = cityName;
+        this.weatherApiKey = weatherApiKey;
+        this.weatherApiEntryPoint = weatherApiEntryPoint;
+        this.location = null;
     }
 
-    public URL buildRequestUrlByCity() throws MalformedURLException {
-        Uri builtUri = Uri.parse(weatherRequestData.getWeatherApiEntryPoint())
-                .buildUpon()
-                .appendQueryParameter("q", weatherRequestData.getCityName())
-                .appendQueryParameter("appid", weatherRequestData.getWeatherApiKey())
-                .appendQueryParameter("units", "metric")
-                .build();
-        return new URL(builtUri.toString());
+    WeatherRequest(@NonNull Location location, @NonNull String weatherApiKey, @NonNull String weatherApiEntryPoint) {
+        this.location = location;
+        this.weatherApiKey = weatherApiKey;
+        this.weatherApiEntryPoint = weatherApiEntryPoint;
+        this.cityName = null;
     }
 
-    public URL buildRequestUrlByLocation() throws MalformedURLException {
-        Uri builtUri = Uri.parse(weatherRequestData.getWeatherApiEntryPoint())
-                .buildUpon()
-                .appendQueryParameter("lat", String.valueOf(weatherRequestData.getLocation().getLatitude()))
-                .appendQueryParameter("lon", String.valueOf(weatherRequestData.getLocation().getLongitude()))
-                .appendQueryParameter("appid", weatherRequestData.getWeatherApiKey())
-                .appendQueryParameter("units", "metric")
-                .build();
-        return new URL(builtUri.toString());
+    @Nullable
+    public String getCityName() {
+        return cityName;
     }
 
-    public void doRequest(@NonNull URL weatherEndpoint, @NonNull WeatherRequest.RequestCallback callback) throws IOException {
-        Log.d(TAG, "doRequest start");
-
-        InputStream stream = null;
-        HttpsURLConnection connection = null;
-
-        try {
-            connection = (HttpsURLConnection) weatherEndpoint.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
-            connection.connect();
-
-            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
-                stream = connection.getInputStream();
-                String respond = StreamUtils.streamToString(stream);
-                callback.onRequestSucceed(respond);
-            } else {
-                callback.onRequestFailed();
-            }
-        } finally {
-            StreamUtils.closeAll(stream);
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-        Log.d(TAG, "doRequest finish");
+    @Nullable
+    public Location getLocation() {
+        return location;
     }
 
-    public Optional<WeatherInfo> parseWeather(@NonNull String response) {
-        try {
-            JSONObject json = new JSONObject(response);
-            JSONObject main = json.getJSONObject(JSON_MAIN);
-            JSONObject wind = json.getJSONObject(JSON_WIND);
-            return Optional.of(new WeatherInfo(
-                    main.getString(TEMPERATURE),
-                    main.getString(HUMIDITY),
-                    json.getString(VISIBILITY),
-                    wind.getString(WIND_SPEED)));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return Optional.empty();
+    @NonNull
+    public String getWeatherApiKey() {
+        return weatherApiKey;
     }
 
-    public interface RequestCallback {
-        void onRequestSucceed(@NonNull String respond);
-        void onRequestFailed();
+    @NonNull
+    public String getWeatherApiEntryPoint() {
+        return weatherApiEntryPoint;
     }
 }

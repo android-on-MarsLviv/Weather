@@ -11,7 +11,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -41,10 +40,10 @@ public class WeatherService extends Service {
         return binder;
     }
 
-    public void getCurrentWeatherInfo(@NonNull WeatherRequestData weatherRequestData, WeatherServiceCallback callback) {
+    public void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequestData, WeatherServiceCallback callback) {
         Log.d(TAG, "getCurrentWeatherInfo: City - " + weatherRequestData.getCityName());
 
-        WeatherServiceRunnable weatherServiceRunnable = new WeatherServiceRunnable(weatherRequestData, callback);
+        WeatherProviderRunnable weatherServiceRunnable = new WeatherProviderRunnable(weatherRequestData, callback);
         executorService.execute(weatherServiceRunnable);
     }
 
@@ -53,21 +52,21 @@ public class WeatherService extends Service {
 
     }
 
-    private class WeatherServiceRunnable implements Runnable {
-        private WeatherRequestData weatherRequestData;
+    private class WeatherProviderRunnable implements Runnable {
+        private WeatherRequest weatherRequestData;
         private WeatherServiceCallback callback;
 
-        public WeatherServiceRunnable(@NonNull WeatherRequestData weatherRequestData, WeatherServiceCallback callback) {
+        public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequestData, WeatherServiceCallback callback) {
             this.weatherRequestData = weatherRequestData;
             this.callback = callback;
         }
 
         public void run() {
-            WeatherRequest weatherRequest = new WeatherRequest(weatherRequestData);
+            WeatherInfoProvider weatherRequest = new WeatherInfoProvider(weatherRequestData);
 
             try {
                 URL request = weatherRequest.buildRequestUrlByCity();
-                weatherRequest.doRequest(request, new WeatherRequest.RequestCallback() {
+                weatherRequest.doRequest(request, new WeatherInfoProvider.RequestCallback() {
                     @Override
                     public void onRequestSucceed(@NonNull String respond) {
                         Optional<WeatherInfo> weatherInfo = weatherRequest.parseWeather(respond);
