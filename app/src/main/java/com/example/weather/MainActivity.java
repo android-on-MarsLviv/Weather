@@ -18,8 +18,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Optional;
-
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -99,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                                             , new WeatherService.WeatherServiceCallback() {
             @Override
             public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
-                updateTemperatureView(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                updateWeatherView(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
             }
 
             @Override
@@ -123,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
         locationClient.onRequestPermissionsResult(requestCode, grantResults);
     }
 
-    private void updateTemperatureView(@NonNull String massage) {
+    private void updateWeatherView(@NonNull String massage) {
         showWeatherView.post(new Runnable() {
             @Override
             public void run() {
@@ -133,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void notificationOnError(@NonNull String notificationToUser) {
-        updateTemperatureView(getText(R.string.default_weather_message).toString());
+        updateWeatherView(getText(R.string.default_weather_message).toString());
         runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
     }
 }
