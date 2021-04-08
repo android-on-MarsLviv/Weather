@@ -44,8 +44,8 @@ public class WeatherService extends Service {
     public void getCurrentWeatherInfo(@NonNull WeatherRequestData weatherRequestData, WeatherServiceCallback callback) {
         Log.d(TAG, "getCurrentWeatherInfo: City - " + weatherRequestData.getCityName());
 
-        HandleRequest handleRequest = new HandleRequest(weatherRequestData, callback);
-        executorService.execute(handleRequest);
+        WeatherServiceRunnable weatherServiceRunnable = new WeatherServiceRunnable(weatherRequestData, callback);
+        executorService.execute(weatherServiceRunnable);
     }
 
     public void getCurrentWeatherInfo(@NonNull Location location, @NonNull Resources resources, WeatherServiceCallback callback) {
@@ -53,28 +53,20 @@ public class WeatherService extends Service {
 
     }
 
-    private class HandleRequest implements Runnable {
-        WeatherRequestData weatherRequestData;
-        WeatherServiceCallback callback;
+    private class WeatherServiceRunnable implements Runnable {
+        private WeatherRequestData weatherRequestData;
+        private WeatherServiceCallback callback;
 
-        public HandleRequest(@NonNull WeatherRequestData weatherRequestData, WeatherServiceCallback callback) {
+        public WeatherServiceRunnable(@NonNull WeatherRequestData weatherRequestData, WeatherServiceCallback callback) {
             this.weatherRequestData = weatherRequestData;
             this.callback = callback;
         }
 
         public void run() {
             WeatherRequest weatherRequest = new WeatherRequest(weatherRequestData);
-            final URL request;
 
             try {
-                request = weatherRequest.buildRequestUrlByCity();
-            } catch (MalformedURLException e) {
-                Log.d(TAG, "couldn't build Url");
-                e.printStackTrace();
-                return;
-            }
-
-            try {
+                URL request = weatherRequest.buildRequestUrlByCity();
                 weatherRequest.doRequest(request, new WeatherRequest.RequestCallback() {
                     @Override
                     public void onRequestSucceed(@NonNull String respond) {
