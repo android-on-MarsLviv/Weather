@@ -40,53 +40,34 @@ public class WeatherService extends Service {
         return binder;
     }
 
-    public void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequestData, WeatherServiceCallback callback) {
-        Log.d(TAG, "getCurrentWeatherInfo: City - " + weatherRequestData.getCityName());
-
-        WeatherProviderRunnable weatherServiceRunnable = new WeatherProviderRunnable(weatherRequestData, callback);
-        executorService.execute(weatherServiceRunnable);
-    }
-
-    public void getCurrentWeatherInfo(@NonNull Location location, @NonNull Resources resources, WeatherServiceCallback callback) {
-        Log.d(TAG, "getCurrentWeatherInfo: Location");
-
+    public void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequest, WeatherServiceCallback callback) {
+        WeatherProviderRunnable weatherProviderRunnable = new WeatherProviderRunnable(weatherRequest, callback);
+        executorService.execute(weatherProviderRunnable);
     }
 
     private class WeatherProviderRunnable implements Runnable {
-        private WeatherRequest weatherRequestData;
+        private WeatherRequest weatherRequest;
         private WeatherServiceCallback callback;
 
-        public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequestData, WeatherServiceCallback callback) {
-            this.weatherRequestData = weatherRequestData;
+        public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequest, WeatherServiceCallback callback) {
+            this.weatherRequest = weatherRequest;
             this.callback = callback;
         }
 
         public void run() {
-            WeatherInfoProvider weatherRequest = new WeatherInfoProvider(weatherRequestData);
+            WeatherInfoProvider weatherInfoProvider = new WeatherInfoProvider(weatherRequest);
+            weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
+                @Override
+                public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
+                    callback.onWeatherInfoObtained(weatherInfo);
+                }
 
-            try {
-                URL request = weatherRequest.buildRequestUrlByCity();
-                weatherRequest.doRequest(request, new WeatherInfoProvider.RequestCallback() {
-                    @Override
-                    public void onRequestSucceed(@NonNull String respond) {
-                        Optional<WeatherInfo> weatherInfo = weatherRequest.parseWeather(respond);
-                        if (!weatherInfo.isPresent()) {
-                            Log.d(TAG, "weatherInfo is empty");
-                            return;
-                        }
-                        WeatherInfo weather = weatherInfo.get();
-                        callback.onWeatherInfoObtained(weather);
-                    }
-
-                    @Override
-                    public void onRequestFailed() {
-                        Log.d(TAG, "onRequestFailed");
-                        callback.onError(new Error("onRequestFailed"));
-                    }
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                @Override
+                public void onRequestFailed() {
+                    Log.d(TAG, "onRequestFailed");
+                    callback.onError(new Error("onRequestFailed"));
+                }
+            });
         }
     }
 

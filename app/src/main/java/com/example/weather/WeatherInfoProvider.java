@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,51 +28,54 @@ public class WeatherInfoProvider {
     private static final String VISIBILITY = "visibility";
     private static final String WIND_SPEED = "speed";
 
-    private final WeatherRequest weatherRequestData;
+    private final WeatherRequest weatherRequest;
+    private Uri uri = null;
 
-    public WeatherInfoProvider(@NonNull WeatherRequest weatherRequestData) {
-        this.weatherRequestData = weatherRequestData;
+    public WeatherInfoProvider(@NonNull WeatherRequest weatherRequest) {
+        this.weatherRequest = weatherRequest;
     }
 
-    public URL buildRequestUrlByCity() throws MalformedURLException {
-        Uri builtUri = Uri.parse(weatherRequestData.getWeatherApiEntryPoint())
-                .buildUpon()
-                .appendQueryParameter("q", weatherRequestData.getCityName())
-                .appendQueryParameter("appid", weatherRequestData.getWeatherApiKey())
-                .appendQueryParameter("units", "metric")
-                .build();
-        return new URL(builtUri.toString());
+    public void provideWeather(@NonNull WeatherInfoProvider.RequestCallback callback) {
+
+        try {
+            uri = weatherRequest.createRequestUri();
+            String response = doRequest();
+            if (response == null) {
+                Log.d(TAG, "response is empty");
+                callback.onRequestFailed();
+                return;
+            }
+            Optional<WeatherInfo> weatherInfo = parseWeather(response);
+            if (!weatherInfo.isPresent()) {
+                Log.d(TAG, "weatherInfo is empty");
+                callback.onRequestFailed();
+                return;
+            }
+            WeatherInfo weather = weatherInfo.get();
+            callback.onRequestSucceed(weather);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public URL buildRequestUrlByLocation() throws MalformedURLException {
-        Uri builtUri = Uri.parse(weatherRequestData.getWeatherApiEntryPoint())
-                .buildUpon()
-                .appendQueryParameter("lat", String.valueOf(weatherRequestData.getLocation().getLatitude()))
-                .appendQueryParameter("lon", String.valueOf(weatherRequestData.getLocation().getLongitude()))
-                .appendQueryParameter("appid", weatherRequestData.getWeatherApiKey())
-                .appendQueryParameter("units", "metric")
-                .build();
-        return new URL(builtUri.toString());
-    }
-
-    public void doRequest(@NonNull URL weatherEndpoint, @NonNull WeatherInfoProvider.RequestCallback callback) throws IOException {
+    @Nullable
+    private String doRequest() throws IOException {
         Log.d(TAG, "doRequest start");
 
         InputStream stream = null;
         HttpsURLConnection connection = null;
 
         try {
-            connection = (HttpsURLConnection) weatherEndpoint.openConnection();
+            connection = (HttpsURLConnection) new URL(uri.toString()).openConnection();
             connection.setRequestMethod("GET");
             connection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
             connection.connect();
 
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 stream = connection.getInputStream();
-                String respond = StreamUtils.streamToString(stream);
-                callback.onRequestSucceed(respond);
+                return StreamUtils.streamToString(stream);
             } else {
-                callback.onRequestFailed();
+                return null;
             }
         } finally {
             StreamUtils.closeAll(stream);
@@ -79,10 +83,9 @@ public class WeatherInfoProvider {
                 connection.disconnect();
             }
         }
-        Log.d(TAG, "doRequest finish");
     }
 
-    public Optional<WeatherInfo> parseWeather(@NonNull String response) {
+    private Optional<WeatherInfo> parseWeather(@NonNull String response) {
         try {
             JSONObject json = new JSONObject(response);
             JSONObject main = json.getJSONObject(JSON_MAIN);
@@ -100,7 +103,7 @@ public class WeatherInfoProvider {
     }
 
     public interface RequestCallback {
-        void onRequestSucceed(@NonNull String respond);
+        void onRequestSucceed(@NonNull WeatherInfo weatherInfo);
         void onRequestFailed();
     }
 }

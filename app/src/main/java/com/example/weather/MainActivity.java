@@ -85,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
     private void onClickByCity(View view) {
         // TODO: keep this button disabled while current request not finished
         // https://trello.com/c/SFB76xJc
-        Log.d(TAG, "onClick start");
 
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
@@ -93,8 +92,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        weatherService.getCurrentWeatherInfo(new WeatherRequest(cityName, getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
-                                            , new WeatherService.WeatherServiceCallback() {
+        WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
+                .setCity(cityName)
+                .build();
+        weatherService.getCurrentWeatherInfo(weatherRequest, new WeatherService.WeatherServiceCallback() {
             @Override
             public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
                 updateWeatherView(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
@@ -105,8 +106,6 @@ public class MainActivity extends AppCompatActivity {
                 notificationOnError(getText(R.string.error_wrong_request).toString());
             }
         });
-
-        Log.d(TAG, "onClick finish");
     }
 
     public void onClickByLocation(View view) {
