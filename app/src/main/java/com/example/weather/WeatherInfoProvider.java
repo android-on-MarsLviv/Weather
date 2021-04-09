@@ -19,7 +19,9 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class WeatherInfoProvider {
     private static final String TAG = WeatherInfoProvider.class.getSimpleName();
+
     private static final int HTTP_REQUEST_TIMEOUT = 3000;
+    private static final String REQUEST_METHOD = "GET";
 
     private static final String JSON_MAIN = "main";
     private static final String JSON_WIND = "wind";
@@ -36,18 +38,18 @@ public class WeatherInfoProvider {
     }
 
     public void provideWeather(@NonNull WeatherInfoProvider.RequestCallback callback) {
-
         try {
             uri = weatherRequest.createRequestUri();
+            Log.d(TAG, "provideWeather by uri:" + uri);
             String response = doRequest();
             if (response == null) {
-                Log.d(TAG, "response is empty");
+                Log.i(TAG, "response is empty");
                 callback.onRequestFailed();
                 return;
             }
             Optional<WeatherInfo> weatherInfo = parseWeather(response);
             if (!weatherInfo.isPresent()) {
-                Log.d(TAG, "weatherInfo is empty");
+                Log.i(TAG, "weatherInfo is empty");
                 callback.onRequestFailed();
                 return;
             }
@@ -60,14 +62,14 @@ public class WeatherInfoProvider {
 
     @Nullable
     private String doRequest() throws IOException {
-        Log.d(TAG, "doRequest start");
+        Log.d(TAG, "doRequest");
 
         InputStream stream = null;
         HttpsURLConnection connection = null;
 
         try {
             connection = (HttpsURLConnection) new URL(uri.toString()).openConnection();
-            connection.setRequestMethod("GET");
+            connection.setRequestMethod(REQUEST_METHOD);
             connection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
             connection.connect();
 
@@ -75,6 +77,7 @@ public class WeatherInfoProvider {
                 stream = connection.getInputStream();
                 return StreamUtils.streamToString(stream);
             } else {
+                Log.i(TAG, "Error. Response code:" + connection.getResponseCode());
                 return null;
             }
         } finally {

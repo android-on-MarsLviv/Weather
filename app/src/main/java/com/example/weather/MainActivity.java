@@ -36,11 +36,13 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName className, IBinder service) {
             WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
             weatherService = binder.getService();
+            Log.d(TAG, "WeatherService connected");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             weatherService = null;
+            Log.d(TAG, "WeatherService disconnected");
         }
     };
 
@@ -83,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onClickByCity(View view) {
+        Log.i(TAG, "onClickByCity");
         // TODO: keep this button disabled while current request not finished
         // https://trello.com/c/SFB76xJc
 

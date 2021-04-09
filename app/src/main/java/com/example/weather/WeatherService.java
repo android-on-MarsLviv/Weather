@@ -41,13 +41,14 @@ public class WeatherService extends Service {
     }
 
     public void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequest, WeatherServiceCallback callback) {
+        Log.i(TAG, "getCurrentWeatherInfo");
         WeatherProviderRunnable weatherProviderRunnable = new WeatherProviderRunnable(weatherRequest, callback);
         executorService.execute(weatherProviderRunnable);
     }
 
     private class WeatherProviderRunnable implements Runnable {
-        private WeatherRequest weatherRequest;
-        private WeatherServiceCallback callback;
+        private final WeatherRequest weatherRequest;
+        private final WeatherServiceCallback callback;
 
         public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequest, WeatherServiceCallback callback) {
             this.weatherRequest = weatherRequest;
@@ -55,6 +56,7 @@ public class WeatherService extends Service {
         }
 
         public void run() {
+            Log.d(TAG, "run");
             WeatherInfoProvider weatherInfoProvider = new WeatherInfoProvider(weatherRequest);
             weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
                 @Override
@@ -64,8 +66,8 @@ public class WeatherService extends Service {
 
                 @Override
                 public void onRequestFailed() {
-                    Log.d(TAG, "onRequestFailed");
-                    callback.onError(new Error("onRequestFailed"));
+                    Log.i(TAG, "RequestFailed");
+                    callback.onError(new Error(""));
                 }
             });
         }

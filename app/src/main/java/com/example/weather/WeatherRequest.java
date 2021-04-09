@@ -10,6 +10,9 @@ public class WeatherRequest {
     private static final String APP_ID = "appid";
     private static final String API_UNITS = "units";
     private static final String API_UNITS_VALUE = "metric";
+    private static final String LATITUDE = "lat";
+    private static final String LONGITUDE = "lon";
+    private static final String CITY = "q";
 
     private final String weatherApiKey;
     private final String weatherApiEntryPoint;
@@ -25,26 +28,6 @@ public class WeatherRequest {
         this.location = location;
     }
 
-    @Nullable
-    public String getCityName() {
-        return cityName;
-    }
-
-    @Nullable
-    public Location getLocation() {
-        return location;
-    }
-
-    @NonNull
-    public String getWeatherApiKey() {
-        return weatherApiKey;
-    }
-
-    @NonNull
-    public String getWeatherApiEntryPoint() {
-        return weatherApiEntryPoint;
-    }
-
     public Uri createRequestUri() {
         Uri.Builder uriBuilder = Uri.parse(weatherApiEntryPoint)
                 .buildUpon()
@@ -52,13 +35,13 @@ public class WeatherRequest {
                 .appendQueryParameter(API_UNITS, API_UNITS_VALUE);
 
         if (cityName != null) {
-            uriBuilder.appendQueryParameter("q", cityName);
+            uriBuilder.appendQueryParameter(CITY, cityName);
         }
 
         if (location != null) {
             uriBuilder
-                    .appendQueryParameter("lat", String.valueOf(location.getLatitude()))
-                    .appendQueryParameter("lon", String.valueOf(location.getLongitude()));
+                    .appendQueryParameter(LATITUDE, String.valueOf(location.getLatitude()))
+                    .appendQueryParameter(LONGITUDE, String.valueOf(location.getLongitude()));
         }
 
         return uriBuilder.build();
