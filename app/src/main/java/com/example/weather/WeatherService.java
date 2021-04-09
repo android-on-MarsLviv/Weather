@@ -40,7 +40,7 @@ public class WeatherService extends Service {
         return binder;
     }
 
-    public void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequest, WeatherServiceCallback callback) {
+    public void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequest, @NonNull WeatherServiceCallback callback) {
         Log.i(TAG, "getCurrentWeatherInfo");
         WeatherProviderRunnable weatherProviderRunnable = new WeatherProviderRunnable(weatherRequest, callback);
         executorService.execute(weatherProviderRunnable);
@@ -50,7 +50,7 @@ public class WeatherService extends Service {
         private final WeatherRequest weatherRequest;
         private final WeatherServiceCallback callback;
 
-        public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequest, WeatherServiceCallback callback) {
+        public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequest, @NonNull WeatherServiceCallback callback) {
             this.weatherRequest = weatherRequest;
             this.callback = callback;
         }
@@ -74,7 +74,7 @@ public class WeatherService extends Service {
     }
 
     public interface WeatherServiceCallback {
-        void onWeatherInfoObtained(WeatherInfo weatherInfo);
+        void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo);
         void onError(@NonNull Error errorCode);
     }
 }

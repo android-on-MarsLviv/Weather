@@ -54,7 +54,7 @@ public class WeatherRequest {
         private String cityName;
         private Location location;
 
-        public Builder(String weatherApiKey, String weatherApiEntryPoint) {
+        public Builder(@NonNull String weatherApiKey, @NonNull String weatherApiEntryPoint) {
             this.weatherApiKey = weatherApiKey;
             this.weatherApiEntryPoint = weatherApiEntryPoint;
         }

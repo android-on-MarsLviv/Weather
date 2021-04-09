@@ -18,17 +18,17 @@ import java.util.Optional;
 import javax.net.ssl.HttpsURLConnection;
 
 public class WeatherInfoProvider {
-    private static final String TAG = WeatherInfoProvider.class.getSimpleName();
+    private final String TAG = WeatherInfoProvider.class.getSimpleName();
 
-    private static final int HTTP_REQUEST_TIMEOUT = 3000;
-    private static final String REQUEST_METHOD = "GET";
+    private final int HTTP_REQUEST_TIMEOUT = 3000;
+    private final String REQUEST_METHOD = "GET";
 
-    private static final String JSON_MAIN = "main";
-    private static final String JSON_WIND = "wind";
-    private static final String TEMPERATURE = "temp";
-    private static final String HUMIDITY = "humidity";
-    private static final String VISIBILITY = "visibility";
-    private static final String WIND_SPEED = "speed";
+    private final String JSON_MAIN = "main";
+    private final String JSON_WIND = "wind";
+    private final String TEMPERATURE = "temp";
+    private final String HUMIDITY = "humidity";
+    private final String VISIBILITY = "visibility";
+    private final String WIND_SPEED = "speed";
 
     private final WeatherRequest weatherRequest;
     private Uri uri = null;
