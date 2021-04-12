@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
-            notificationOnError(getText(R.string.error_wrong_city).toString());
+            showWeatherView.setText(getText(R.string.error_wrong_city).toString());
             return;
         }
 
@@ -100,14 +100,15 @@ public class MainActivity extends AppCompatActivity {
         weatherService.getCurrentWeatherInfo(weatherRequest, new WeatherService.WeatherServiceCallback() {
             @Override
             public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
-                updateWeatherView(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
-                runOnUiThread(() -> weatherByCityButton.setEnabled(true));
+                showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                weatherByCityButton.setEnabled(true);
             }
 
             @Override
             public void onError() {
-                notificationOnError(getText(R.string.error_wrong_request).toString());
-                runOnUiThread(() -> weatherByCityButton.setEnabled(true));
+                showWeatherView.setText(getText(R.string.default_weather_message).toString());
+                Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
+                weatherByCityButton.setEnabled(true);
             }
         });
     }
@@ -122,19 +123,5 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         locationClient.onRequestPermissionsResult(requestCode, grantResults);
-    }
-
-    private void updateWeatherView(@NonNull String massage) {
-        showWeatherView.post(new Runnable() {
-            @Override
-            public void run() {
-                showWeatherView.setText(massage);
-            }
-        });
-    }
-
-    private void notificationOnError(@NonNull String errorMMessage) {
-        updateWeatherView(getText(R.string.default_weather_message).toString());
-        runOnUiThread(() -> Toast.makeText(this, errorMMessage, Toast.LENGTH_SHORT).show());
     }
 }

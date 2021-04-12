@@ -5,7 +5,9 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.location.Location;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -22,6 +24,8 @@ public class WeatherService extends Service {
     private ExecutorService executorService;
 
     private final IBinder binder = new WeatherBinder();
+
+    private Handler handler;
 
     @Override
     public void onCreate() {
@@ -57,16 +61,28 @@ public class WeatherService extends Service {
 
         public void run() {
             Log.d(TAG, "run");
+            handler = new Handler(getMainLooper());
+
             WeatherInfoProvider weatherInfoProvider = new WeatherInfoProvider(weatherRequest);
             weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
                 @Override
                 public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
-                    callback.onWeatherInfoObtained(weatherInfo);
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onWeatherInfoObtained(weatherInfo);
+                        }
+                    });
                 }
 
                 @Override
                 public void onRequestFailed() {
-                    callback.onError();
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onError();;
+                        }
+                    });
                 }
             });
         }
