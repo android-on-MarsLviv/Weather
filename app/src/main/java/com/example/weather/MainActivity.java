@@ -105,9 +105,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onError(@NonNull Error error) {
+            public void onError() {
                 notificationOnError(getText(R.string.error_wrong_request).toString());
-                Log.i(TAG, error.toString());
                 runOnUiThread(() -> weatherByCityButton.setEnabled(true));
             }
         });
