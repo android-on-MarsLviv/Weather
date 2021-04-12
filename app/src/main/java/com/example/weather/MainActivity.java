@@ -86,8 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void onClickByCity(View view) {
         Log.i(TAG, "onClickByCity");
-        // TODO: keep this button disabled while current request not finished
-        // https://trello.com/c/SFB76xJc
+        weatherByCityButton.setEnabled(false);
 
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
@@ -102,11 +101,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
                 updateWeatherView(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                runOnUiThread(() -> weatherByCityButton.setEnabled(true));
             }
 
             @Override
             public void onError(@NonNull Error errorCode) {
                 notificationOnError(getText(R.string.error_wrong_request).toString());
+                runOnUiThread(() -> weatherByCityButton.setEnabled(true));
             }
         });
     }
