@@ -105,8 +105,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onError(@NonNull Error errorCode) {
+            public void onError(@NonNull Error error) {
                 notificationOnError(getText(R.string.error_wrong_request).toString());
+                Log.i(TAG, error.toString());
                 runOnUiThread(() -> weatherByCityButton.setEnabled(true));
             }
         });
@@ -133,8 +134,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void notificationOnError(@NonNull String notificationToUser) {
+    private void notificationOnError(@NonNull String errorMMessage) {
         updateWeatherView(getText(R.string.default_weather_message).toString());
-        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this, errorMMessage, Toast.LENGTH_SHORT).show());
     }
 }

@@ -66,8 +66,7 @@ public class WeatherService extends Service {
 
                 @Override
                 public void onRequestFailed() {
-                    Log.i(TAG, "RequestFailed");
-                    callback.onError(new Error(""));
+                    callback.onError(new Error("RequestFailed"));
                 }
             });
         }
@@ -75,6 +74,6 @@ public class WeatherService extends Service {
 
     public interface WeatherServiceCallback {
         void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo);
-        void onError(@NonNull Error errorCode);
+        void onError(@NonNull Error error);
     }
 }

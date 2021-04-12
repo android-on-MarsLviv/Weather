@@ -57,6 +57,7 @@ public class WeatherInfoProvider {
             callback.onRequestSucceed(weather);
         } catch (IOException e) {
             e.printStackTrace();
+            callback.onRequestFailed();
         }
     }
 
