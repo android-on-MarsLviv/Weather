@@ -27,7 +27,6 @@ public class MainActivity extends AppCompatActivity {
     private Button weatherByLocationButton;
 
     private LocationClient locationClient;
-    private Location currentLocation;
 
     private WeatherService weatherService;
 
@@ -59,13 +58,7 @@ public class MainActivity extends AppCompatActivity {
         weatherByCityButton.setOnClickListener(this::onClickByCity);
         weatherByLocationButton.setOnClickListener(this::onClickByLocation);
 
-        locationClient = new LocationClient(this, new LocationClient.RetrieveLocationCallback() {
-            @Override
-            public void onRetrieveLocation(@NonNull Location location) {
-                currentLocation = location;
-                Log.d(TAG, "curr latitude:" + currentLocation.getLatitude() + "  curr longitude:" + currentLocation.getLongitude());
-            }
-        });
+        locationClient = new LocationClient(this);
     }
 
     @Override
@@ -114,9 +107,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickByLocation(View view) {
-        // todo: implement
-        // https://trello.com/c/W4VxNHog
-        locationClient.getLocation();
+        Log.i(TAG, "onClickByLocation");
+        weatherByLocationButton.setEnabled(false);
+
+        locationClient.getLocation(new LocationClient.RetrieveLocationCallback() {
+            @Override
+            public void onRetrieveLocation(@NonNull Location location) {
+                Log.d(TAG, "onRetrieveLocation(): latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
+
+                WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
+                        .setLocation(location)
+                        .build();
+                weatherService.getCurrentWeatherInfo(weatherRequest, new WeatherService.WeatherServiceCallback() {
+                    @Override
+                    public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
+                        showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                        weatherByLocationButton.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onError() {
+                        showWeatherView.setText(getText(R.string.default_weather_message).toString());
+                        Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
+                        weatherByLocationButton.setEnabled(true);
+                    }
+                });
+            }
+        });
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
