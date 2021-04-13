@@ -2,19 +2,13 @@ package com.example.weather;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -67,22 +61,12 @@ public class WeatherService extends Service {
             weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
                 @Override
                 public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onWeatherInfoObtained(weatherInfo);
-                        }
-                    });
+                    handler.post(() -> callback.onWeatherInfoObtained(weatherInfo));
                 }
 
                 @Override
                 public void onRequestFailed() {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onError();;
-                        }
-                    });
+                    handler.post(() -> callback.onError());
                 }
             });
         }
