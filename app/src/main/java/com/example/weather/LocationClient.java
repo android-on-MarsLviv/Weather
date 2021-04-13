@@ -30,24 +30,6 @@ public class LocationClient {
 
     static final int LOCATION_REQUEST = 1000;
 
-    public LocationClient(@NonNull Activity activity, @NonNull RetrieveLocationCallback retrieveLocationCallback) {
-        this.activity = activity;
-        this.retrieveLocationCallback = retrieveLocationCallback;
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity);
-
-        locationRequest = LocationRequest.create();
-        locationRequest.setNumUpdates(1);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(@NonNull LocationResult locationResult) {
-                retrieveLocationCallback.onRetrieveLocation(locationResult.getLastLocation());
-            }
-        };
-    }
-
     public LocationClient(@NonNull Activity activity) {
         this.activity = activity;
 
@@ -58,7 +40,7 @@ public class LocationClient {
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
-    public void getLocation2(@NonNull RetrieveLocationCallback retrieveLocationCallback) {
+    public void getLocation(@NonNull RetrieveLocationCallback retrieveLocationCallback) {
         if (!checkPermission()) {
             requestPermission();
             return;
@@ -72,16 +54,6 @@ public class LocationClient {
                 retrieveLocationCallback.onRetrieveLocation(locationResult.getLastLocation());
             }
         };
-
-        Log.i(TAG, "permissions already granted");
-        getFusedLocation();
-    }
-
-    public void getLocation() {
-        if (!checkPermission()) {
-            requestPermission();
-            return;
-        }
 
         Log.i(TAG, "permissions already granted");
         getFusedLocation();
