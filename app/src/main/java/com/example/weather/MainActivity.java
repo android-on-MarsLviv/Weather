@@ -114,9 +114,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickByLocation(View view) {
-        // todo: implement
-        // https://trello.com/c/W4VxNHog
+        Log.i(TAG, "onClickByLocation");
+        weatherByLocationButton.setEnabled(false);
         locationClient.getLocation();
+
+        weatherByLocationButton.setEnabled(true);
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
