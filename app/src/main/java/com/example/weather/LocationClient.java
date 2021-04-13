@@ -23,9 +23,9 @@ public class LocationClient {
 
     private final FusedLocationProviderClient fusedLocationClient;
     private final LocationRequest locationRequest;
-    private /*final*/ LocationCallback locationCallback;
+    private LocationCallback locationCallback;
 
-    private /*final*/ RetrieveLocationCallback retrieveLocationCallback;
+    private RetrieveLocationCallback retrieveLocationCallback;
     private final Activity activity;
 
     static final int LOCATION_REQUEST = 1000;
