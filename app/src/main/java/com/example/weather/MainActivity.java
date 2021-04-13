@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         locationClient.getLocation(new LocationClient.RetrieveLocationCallback() {
             @Override
             public void onRetrieveLocation(@NonNull Location location) {
-                Log.d(TAG, "latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
+                Log.d(TAG, "onRetrieveLocation(): latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
 
                 WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
                         .setLocation(location)
