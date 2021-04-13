@@ -116,7 +116,15 @@ public class MainActivity extends AppCompatActivity {
     public void onClickByLocation(View view) {
         Log.i(TAG, "onClickByLocation");
         weatherByLocationButton.setEnabled(false);
-        locationClient.getLocation();
+        //locationClient.getLocation();
+
+        locationClient.getLocation2(new LocationClient.RetrieveLocationCallback() {
+            @Override
+            public void onRetrieveLocation(@NonNull Location location) {
+                currentLocation = location;
+                Log.d(TAG, "curr latitude 2:" + currentLocation.getLatitude() + "  curr longitude 2:" + currentLocation.getLongitude());
+            }
+        });
 
         weatherByLocationButton.setEnabled(true);
     }

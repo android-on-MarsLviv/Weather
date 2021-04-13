@@ -23,9 +23,9 @@ public class LocationClient {
 
     private final FusedLocationProviderClient fusedLocationClient;
     private final LocationRequest locationRequest;
-    private final LocationCallback locationCallback;
+    private /*final*/ LocationCallback locationCallback;
 
-    private final RetrieveLocationCallback retrieveLocationCallback;
+    private /*final*/ RetrieveLocationCallback retrieveLocationCallback;
     private final Activity activity;
 
     static final int LOCATION_REQUEST = 1000;
@@ -46,6 +46,35 @@ public class LocationClient {
                 retrieveLocationCallback.onRetrieveLocation(locationResult.getLastLocation());
             }
         };
+    }
+
+    public LocationClient(@NonNull Activity activity) {
+        this.activity = activity;
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity);
+
+        locationRequest = LocationRequest.create();
+        locationRequest.setNumUpdates(1);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
+    public void getLocation2(@NonNull RetrieveLocationCallback retrieveLocationCallback) {
+        if (!checkPermission()) {
+            requestPermission();
+            return;
+        }
+
+        this.retrieveLocationCallback = retrieveLocationCallback;
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                retrieveLocationCallback.onRetrieveLocation(locationResult.getLastLocation());
+            }
+        };
+
+        Log.i(TAG, "permissions already granted");
+        getFusedLocation();
     }
 
     public void getLocation() {
