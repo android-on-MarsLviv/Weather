@@ -1,14 +1,15 @@
 package com.example.weather;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -17,28 +18,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Optional;
-
-import javax.net.ssl.HttpsURLConnection;
-
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
-
-    private static final int HTTP_REQUEST_TIMEOUT = 3000;
-
-    private static final String JSON_MAIN = "main";
-    private static final String JSON_WIND = "wind";
-    private static final String TEMPERATURE = "temp";
-    private static final String HUMIDITY = "humidity";
-    private static final String VISIBILITY = "visibility";
-    private static final String WIND_SPEED = "speed";
 
     private TextView showWeatherView;
     private EditText editCityView;
@@ -47,6 +28,23 @@ public class MainActivity extends AppCompatActivity {
 
     private LocationClient locationClient;
     private Location currentLocation;
+
+    private WeatherService weatherService;
+
+    private final ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
+            weatherService = binder.getService();
+            Log.d(TAG, "WeatherService connected");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            weatherService = null;
+            Log.d(TAG, "WeatherService disconnected");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,61 +68,49 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void onClickByCity(View view) {
-        // TODO: keep this button disabled while current request not finished
-        // https://trello.com/c/SFB76xJc
-        Log.d(TAG, "onClick start");
+    @Override
+    protected void onStart() {
+        super.onStart();
 
-        final URL request;
+        Intent intent = new Intent(this, WeatherService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        unbindService(connection);
+        weatherService = null;
+    }
+
+    private void onClickByCity(View view) {
+        Log.i(TAG, "onClickByCity");
+        weatherByCityButton.setEnabled(false);
+
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
-            notificationOnError(getText(R.string.error_wrong_city).toString());
+            showWeatherView.setText(getText(R.string.error_wrong_city).toString());
             return;
         }
 
-        try {
-            request = buildRequestUrlWithCity(cityName);
-            Log.d(TAG, String.valueOf(request));
-        } catch (MalformedURLException e) {
-            notificationOnError(getText(R.string.error_wrong_request).toString(), e);
-            return;
-        }
-
-        // todo: use Executors.newSingleThreadExecutor() executor to run network task on a separate thread.
-        // https://trello.com/c/O0wDKeQP
-        new Thread(new Runnable() {
+        WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
+                .setCity(cityName)
+                .build();
+        weatherService.getCurrentWeatherInfo(weatherRequest, new WeatherService.WeatherServiceCallback() {
             @Override
-            public void run() {
-                Log.d(TAG, "run started");
-
-                try {
-                    doRequest(request, new RequestCallback() {
-                        @Override
-                        public void onRequestSucceed(String respond) {
-                            Optional<WeatherInfo> weatherInfo = parseWeather(respond);
-                            if (!weatherInfo.isPresent()) {
-                                Log.d(TAG, "weatherInfo is empty");
-                                return;
-                            }
-                            WeatherInfo weather = weatherInfo.get();
-                            updateTemperatureView(getString(R.string.template_weather_message, weather.getTemperature(), weather.getVisibility(), weather.getHumidity(), weather.getWindSpeed()));
-                        }
-
-                        @Override
-                        public void onRequestFailed() {
-                            notificationOnError(getText(R.string.error_wrong_request).toString());
-                        }
-                    });
-                } catch (IOException e) {
-                    notificationOnError(getText(R.string.error_wrong_request).toString(), e);
-                    return;
-                }
-
-                Log.d(TAG, "run finish");
+            public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
+                showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                weatherByCityButton.setEnabled(true);
             }
-        }).start();
 
-        Log.d(TAG, "onClick finish");
+            @Override
+            public void onError() {
+                showWeatherView.setText(getText(R.string.default_weather_message).toString());
+                Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
+                weatherByCityButton.setEnabled(true);
+            }
+        });
     }
 
     public void onClickByLocation(View view) {
@@ -138,90 +124,4 @@ public class MainActivity extends AppCompatActivity {
 
         locationClient.onRequestPermissionsResult(requestCode, grantResults);
     }
-
-    private void updateTemperatureView(String massage) {
-        showWeatherView.post(new Runnable() {
-            @Override
-            public void run() {
-                showWeatherView.setText(massage);
-            }
-        });
-    }
-
-    private URL buildRequestUrlWithCity(String cityName) throws MalformedURLException {
-        Uri builtUri = Uri.parse(getText(R.string.weather_api_entry_point).toString())
-                .buildUpon()
-                .appendQueryParameter("q", cityName)
-                .appendQueryParameter("appid", getText(R.string.weather_api_key).toString())
-                .appendQueryParameter("units", "metric")
-                .build();
-        return new URL(builtUri.toString());
-    }
-
-    private Optional<WeatherInfo> parseWeather(String response) {
-        try {
-            JSONObject json = new JSONObject(response);
-            JSONObject main = json.getJSONObject(JSON_MAIN);
-            JSONObject wind = json.getJSONObject(JSON_WIND);
-            return Optional.of(new WeatherInfo(
-                    main.getString(TEMPERATURE),
-                    main.getString(HUMIDITY),
-                    json.getString(VISIBILITY),
-                    wind.getString(WIND_SPEED)));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return Optional.empty();
-    }
-
-    void doRequest(@NonNull URL weatherEndpoint, @NonNull RequestCallback callback) throws IOException {
-        Log.d(TAG, "doRequest start");
-
-        InputStream stream = null;
-        HttpsURLConnection connection = null;
-
-        try {
-            connection = (HttpsURLConnection) weatherEndpoint.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
-            connection.connect();
-
-            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
-                stream = connection.getInputStream();
-                String respond = StreamUtils.streamToString(stream);
-
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    callback.onRequestSucceed(respond);
-                });
-            } else {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    callback.onRequestFailed();
-                });
-            }
-        } finally {
-            StreamUtils.closeAll(stream);
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-        Log.d(TAG, "doRequest finish");
-    }
-
-    private void notificationOnError(String notificationToUser) {
-        updateTemperatureView(getText(R.string.default_weather_message).toString());
-        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
-    }
-
-    private void notificationOnError(String notificationToUser, Exception exception) {
-        updateTemperatureView(getText(R.string.default_weather_message).toString());
-        runOnUiThread(() -> Toast.makeText(this, notificationToUser, Toast.LENGTH_SHORT).show());
-        exception.printStackTrace();
-    }
-
-    public interface RequestCallback {
-        void onRequestSucceed(@NonNull String respond);
-        void onRequestFailed();
-    }
-
 }
