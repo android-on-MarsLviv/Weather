@@ -41,19 +41,19 @@ public class LocationClient {
     }
 
     public void getLocation(@NonNull RetrieveLocationCallback retrieveLocationCallback) {
-        if (!checkPermission()) {
-            requestPermission();
-            return;
-        }
-
         this.retrieveLocationCallback = retrieveLocationCallback;
 
-        locationCallback = new LocationCallback() {
+        this.locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 retrieveLocationCallback.onRetrieveLocation(locationResult.getLastLocation());
             }
         };
+
+        if (!checkPermission()) {
+            requestPermission();
+            return;
+        }
 
         Log.i(TAG, "permissions already granted");
         getFusedLocation();
