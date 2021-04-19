@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        Intent intent = new Intent(this, WeatherService2.class);
+        Intent intent = new Intent(this, WeatherService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 

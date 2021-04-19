@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Weather">
         <service
-            android:name=".WeatherService2"
+            android:name=".WeatherService"
             android:enabled="true"
             android:exported="true">
         </service>
@@ -27,8 +27,6 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".WeatherService">
-        </service>
     </application>
 
 </manifest>
