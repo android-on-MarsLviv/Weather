@@ -4,6 +4,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,6 +51,10 @@ public class WeatherRequest implements Parcelable {
         parcel.writeString(weatherApiKey);
         parcel.writeString(weatherApiEntryPoint);
         parcel.writeString(cityName);
+        //parcel.writeParcelable(location, flags);
+        if (location == null) {
+            location = new Location("");
+        }
         location.writeToParcel(parcel, flags);
     }
 

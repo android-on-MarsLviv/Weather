@@ -3,6 +3,7 @@ package com.example.weather;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,7 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+    public String processName = Application.getProcessName();
 
     private TextView showWeatherView;
     private EditText editCityView;
@@ -35,13 +37,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             weatherService = IWeatherService.Stub.asInterface(service);
-            Log.d(TAG, "WeatherService connected");
+            Log.i(TAG, "WeatherService connected");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             weatherService = null;
-            Log.d(TAG, "WeatherService disconnected");
+            Log.i(TAG, "WeatherService disconnected");
         }
     };
 
@@ -59,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
         weatherByLocationButton.setOnClickListener(this::onClickByLocation);
 
         locationClient = new LocationClient(this);
+
+        Log.i(TAG, "Process name: " + processName);
     }
 
     @Override
@@ -96,20 +100,31 @@ public class MainActivity extends AppCompatActivity {
             weatherService.getCurrentWeatherInfo(weatherRequest, new IWeatherServiceCallback.Stub() {
                 @Override
                 public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
-                    showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
-                    weatherByCityButton.setEnabled(true);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                            weatherByCityButton.setEnabled(true);
+                        }
+                    });
                 }
 
                 @Override
                 public void onError() {
-                    showWeatherView.setText(getText(R.string.default_weather_message).toString());
-                    Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
-                    weatherByCityButton.setEnabled(true);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showWeatherView.setText(getText(R.string.default_weather_message).toString());
+                            Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
+                            weatherByCityButton.setEnabled(true);
+                        }
+                    });
+                    Log.i(TAG, "onError");
                 }
             });
         } catch (RemoteException e) {
             e.printStackTrace();
-            Log.i(TAG, "RemoteException during weather rservice equest");
+            Log.i(TAG, "RemoteException during weather receive request");
         }
     }
 
@@ -120,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         locationClient.getLocation(new LocationClient.RetrieveLocationCallback() {
             @Override
             public void onRetrieveLocation(@NonNull Location location) {
-                Log.d(TAG, "onRetrieveLocation(): latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
+                Log.i(TAG, "onRetrieveLocation(): latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
 
                 WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
                         .setLocation(location)
@@ -129,17 +144,28 @@ public class MainActivity extends AppCompatActivity {
                     weatherService.getCurrentWeatherInfo(weatherRequest, new IWeatherServiceCallback.Stub() {
                         @Override
                         public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
-                            showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
-                            editCityView.setText("");
-                            weatherByLocationButton.setEnabled(true);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                                    editCityView.setText("");
+                                    weatherByLocationButton.setEnabled(true);
+                                }
+                            });
                         }
 
                         @Override
                         public void onError() {
-                            showWeatherView.setText(getText(R.string.default_weather_message).toString());
-                            Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
-                            editCityView.setText("");
-                            weatherByLocationButton.setEnabled(true);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showWeatherView.setText(getText(R.string.default_weather_message).toString());
+                                    Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
+                                    editCityView.setText("");
+                                    weatherByLocationButton.setEnabled(true);
+                                }
+                            });
+                            Log.i(TAG, "onError");
                         }
                     });
                 } catch (RemoteException e) {

@@ -13,10 +13,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Weather">
+
         <service
             android:name=".WeatherService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:process=":weatherProcess">
         </service>
 
         <activity android:name=".MainActivity">

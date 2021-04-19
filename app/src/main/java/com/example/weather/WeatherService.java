@@ -1,5 +1,6 @@
 package com.example.weather;
 
+import android.app.Application;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
@@ -14,10 +15,9 @@ import java.util.concurrent.Executors;
 
 public class WeatherService extends Service {
     private static final String TAG = WeatherService.class.getSimpleName();
+    public String processName = Application.getProcessName();
 
     private ExecutorService executorService;
-
-    private Handler handler;
 
     IWeatherService.Stub binder = new IWeatherService.Stub() {
         @Override
@@ -33,6 +33,8 @@ public class WeatherService extends Service {
         super.onCreate();
 
         executorService = Executors.newSingleThreadExecutor();
+
+        Log.i(TAG, "Process name: " + processName);
     }
 
     @Override
@@ -50,33 +52,28 @@ public class WeatherService extends Service {
         }
 
         public void run() {
-            Log.d(TAG, "run");
-            handler = new Handler(getMainLooper());
+            Log.i(TAG, "run");
 
             WeatherInfoProvider weatherInfoProvider = new WeatherInfoProvider(weatherRequest);
             weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
                 @Override
                 public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
-                    handler.post(() -> {
-                        try {
-                            callback.onWeatherInfoObtained(weatherInfo);
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                            Log.d(TAG, "handler couldn't post to main looper");
-                        }
-                    });
+                    try {
+                        callback.onWeatherInfoObtained(weatherInfo);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                        Log.i(TAG, "onRequestSucceed: couldn't make RequestCallback");
+                    }
                 }
 
                 @Override
                 public void onRequestFailed() {
-                    handler.post(() -> {
-                        try {
-                            callback.onError();
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                            Log.d(TAG, "handler couldn't post to main looper");
-                        }
-                    });
+                    try {
+                        callback.onError();
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                        Log.i(TAG, "onRequestFailed: couldn't make RequestCallback");
+                    }
                 }
             });
         }

@@ -40,7 +40,7 @@ public class WeatherInfoProvider {
     public void provideWeather(@NonNull WeatherInfoProvider.RequestCallback callback) {
         try {
             uri = weatherRequest.createRequestUri();
-            Log.d(TAG, "provideWeather by uri:" + uri);
+            Log.i(TAG, "provideWeather by uri:" + uri);
             String response = doRequest();
             if (response == null) {
                 Log.i(TAG, "response is empty");
@@ -63,7 +63,7 @@ public class WeatherInfoProvider {
 
     @Nullable
     private String doRequest() throws IOException {
-        Log.d(TAG, "doRequest");
+        Log.i(TAG, "doRequest");
 
         InputStream stream = null;
         HttpsURLConnection connection = null;
