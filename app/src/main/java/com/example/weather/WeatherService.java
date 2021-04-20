@@ -3,7 +3,6 @@ package com.example.weather;
 import android.app.Application;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -34,7 +33,7 @@ public class WeatherService extends Service {
 
         executorService = Executors.newSingleThreadExecutor();
 
-        Log.i(TAG, "Process name: " + processName);
+        Log.i(TAG, "onCreate: Process name: " + processName);
     }
 
     @Override
@@ -52,7 +51,7 @@ public class WeatherService extends Service {
         }
 
         public void run() {
-            Log.i(TAG, "run");
+            Log.i(TAG, "WeatherProviderRunnable: run");
 
             WeatherInfoProvider weatherInfoProvider = new WeatherInfoProvider(weatherRequest);
             weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
@@ -62,7 +61,7 @@ public class WeatherService extends Service {
                         callback.onWeatherInfoObtained(weatherInfo);
                     } catch (RemoteException e) {
                         e.printStackTrace();
-                        Log.i(TAG, "onRequestSucceed: couldn't make RequestCallback");
+                        Log.i(TAG, "WeatherProviderRunnable: onRequestSucceed: couldn't make RequestCallback");
                     }
                 }
 
@@ -72,7 +71,7 @@ public class WeatherService extends Service {
                         callback.onError();
                     } catch (RemoteException e) {
                         e.printStackTrace();
-                        Log.i(TAG, "onRequestFailed: couldn't make RequestCallback");
+                        Log.i(TAG, "WeatherProviderRunnable: onRequestFailed: couldn't make RequestCallback");
                     }
                 }
             });

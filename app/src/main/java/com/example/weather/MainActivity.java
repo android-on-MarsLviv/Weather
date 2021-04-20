@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
         locationClient = new LocationClient(this);
 
-        Log.i(TAG, "Process name: " + processName);
+        Log.i(TAG, "onCreate: Process name: " + processName);
     }
 
     @Override
@@ -119,12 +119,12 @@ public class MainActivity extends AppCompatActivity {
                             weatherByCityButton.setEnabled(true);
                         }
                     });
-                    Log.i(TAG, "onError");
+                    Log.i(TAG, "onClickByCity: onError");
                 }
             });
         } catch (RemoteException e) {
             e.printStackTrace();
-            Log.i(TAG, "RemoteException during weather receive request");
+            Log.i(TAG, "onClickByCity: RemoteException during weather receive request");
         }
     }
 
@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         locationClient.getLocation(new LocationClient.RetrieveLocationCallback() {
             @Override
             public void onRetrieveLocation(@NonNull Location location) {
-                Log.i(TAG, "onRetrieveLocation(): latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
+                Log.i(TAG, "onRetrieveLocation: latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
 
                 WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
                         .setLocation(location)
@@ -165,12 +165,12 @@ public class MainActivity extends AppCompatActivity {
                                     weatherByLocationButton.setEnabled(true);
                                 }
                             });
-                            Log.i(TAG, "onError");
+                            Log.i(TAG, "onClickByLocation: onError");
                         }
                     });
                 } catch (RemoteException e) {
                     e.printStackTrace();
-                    Log.i(TAG, "RemoteException during weather service request");
+                    Log.i(TAG, "onClickByLocation: RemoteException during weather service request");
                 }
             }
         });

@@ -16,9 +16,9 @@ public class StreamUtils {
 
     @Nullable
     public static String streamToString(@NonNull InputStream inputStreamm) {
-        StringBuilder buffer = null;
+        StringBuilder buffer;
         try {
-            BufferedReader reader = null;
+            BufferedReader reader;
             reader = new BufferedReader(new InputStreamReader(inputStreamm));
             buffer = new StringBuilder();
             String line;
@@ -26,7 +26,7 @@ public class StreamUtils {
                 buffer.append(line).append("\n");
             }
         } catch (IOException e) {
-            Log.e(TAG, "streamToString(): got IOException", e);
+            Log.e(TAG, "streamToString: got IOException", e);
             return null;
         }
         return buffer.toString();

@@ -12,8 +12,6 @@ public class WeatherInfo implements Parcelable {
     private String visibility;
     private String windSpeed;
 
-    public WeatherInfo() {  }
-
     WeatherInfo(@NonNull String temperature, @NonNull String humidity, @NonNull String visibility, @NonNull String windSpeed) {
         this.temperature = temperature;
         this.humidity = humidity;
@@ -62,8 +60,7 @@ public class WeatherInfo implements Parcelable {
     public static final Parcelable.Creator<WeatherInfo> CREATOR = new Parcelable.Creator<WeatherInfo>(){
         @Override
         public WeatherInfo createFromParcel(Parcel parcel) {
-            WeatherInfo weatherInfo = new WeatherInfo(parcel);
-            return weatherInfo;
+            return new WeatherInfo(parcel);
         }
 
         @Override

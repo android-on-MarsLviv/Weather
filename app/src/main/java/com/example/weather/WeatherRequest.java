@@ -61,8 +61,7 @@ public class WeatherRequest implements Parcelable {
     public static final Parcelable.Creator<WeatherRequest> CREATOR = new Parcelable.Creator<WeatherRequest>(){
         @Override
         public WeatherRequest createFromParcel(Parcel parcel) {
-            WeatherRequest weatherRequest = new WeatherRequest(parcel);
-            return weatherRequest;
+            return new WeatherRequest(parcel);
         }
 
         @Override
