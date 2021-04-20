@@ -51,11 +51,11 @@ public class WeatherRequest implements Parcelable {
         parcel.writeString(weatherApiKey);
         parcel.writeString(weatherApiEntryPoint);
         parcel.writeString(cityName);
-        //parcel.writeParcelable(location, flags);
-        if (location == null) {
+        parcel.writeParcelable(location, flags);
+        /*if (location == null) {
             location = new Location("");
         }
-        location.writeToParcel(parcel, flags);
+        location.writeToParcel(parcel, flags);*/
     }
 
     public static final Parcelable.Creator<WeatherRequest> CREATOR = new Parcelable.Creator<WeatherRequest>(){

@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
                     runOnUiThread(new Runnable() {
                         @Override
-                        public void run() {
+                        public void run() {Log.i(TAG, "callback 111");
                             showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
                             weatherByCityButton.setEnabled(true);
                         }

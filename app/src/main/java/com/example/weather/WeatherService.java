@@ -58,6 +58,7 @@ public class WeatherService extends Service {
                 @Override
                 public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
                     try {
+                        Log.i(TAG, "onRequestSucceed: callback == null:" + (callback == null));
                         callback.onWeatherInfoObtained(weatherInfo);
                     } catch (RemoteException e) {
                         e.printStackTrace();
