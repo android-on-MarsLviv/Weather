@@ -1,6 +1,5 @@
 package com.example.weather;
 
-import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -23,7 +22,7 @@ public class WeatherInfo implements Parcelable {
         readFromParcel(parcel);
     }
 
-    public void readFromParcel(Parcel parcel) {
+    private void readFromParcel(Parcel parcel) {
         this.temperature = parcel.readString();
         this.humidity = parcel.readString();
         this.visibility = parcel.readString();

@@ -22,8 +22,7 @@ public class WeatherService extends Service {
         @Override
         public void getCurrentWeatherInfo(WeatherRequest weatherRequest, IWeatherServiceCallback callback) {
             Log.i(TAG, "make binder");
-            WeatherProviderRunnable weatherProviderRunnable = new WeatherProviderRunnable(weatherRequest, callback);
-            executorService.execute(weatherProviderRunnable);
+            WeatherService.this.getCurrentWeatherInfo(weatherRequest, callback);
         }
     };
 
@@ -39,6 +38,11 @@ public class WeatherService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return binder;
+    }
+
+    private void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequest, IWeatherServiceCallback callback) {
+        WeatherProviderRunnable weatherProviderRunnable = new WeatherProviderRunnable(weatherRequest, callback);
+        executorService.execute(weatherProviderRunnable);
     }
 
     private class WeatherProviderRunnable implements Runnable {
@@ -61,7 +65,7 @@ public class WeatherService extends Service {
                         callback.onWeatherInfoObtained(weatherInfo);
                     } catch (RemoteException e) {
                         e.printStackTrace();
-                        Log.i(TAG, "WeatherProviderRunnable: onRequestSucceed: couldn't make RequestCallback");
+                        Log.e(TAG, "WeatherProviderRunnable: onRequestSucceed: couldn't make RequestCallback");
                     }
                 }
 
@@ -71,7 +75,7 @@ public class WeatherService extends Service {
                         callback.onError();
                     } catch (RemoteException e) {
                         e.printStackTrace();
-                        Log.i(TAG, "WeatherProviderRunnable: onRequestFailed: couldn't make RequestCallback");
+                        Log.e(TAG, "WeatherProviderRunnable: onRequestFailed: couldn't make RequestCallback");
                     }
                 }
             });
