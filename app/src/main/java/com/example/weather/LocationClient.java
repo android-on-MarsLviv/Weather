@@ -92,7 +92,7 @@ public class LocationClient {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             getFusedLocation();
         } else {
-            Toast.makeText(activity, "onRequestPermissionsResult: Permission denied", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -22,7 +22,7 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
-    public String processName = Application.getProcessName();
+    private static final String processName = Application.getProcessName();
 
     private TextView showWeatherView;
     private EditText editCityView;
@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
                     runOnUiThread(new Runnable() {
                         @Override
-                        public void run() {Log.i(TAG, "callback 111");
+                        public void run() {
                             showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
                             weatherByCityButton.setEnabled(true);
                         }
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             });
         } catch (RemoteException e) {
             e.printStackTrace();
-            Log.i(TAG, "onClickByCity: RemoteException during weather receive request");
+            Log.i(TAG, "onClickByCity: RemoteException during weather service request");
         }
     }
 

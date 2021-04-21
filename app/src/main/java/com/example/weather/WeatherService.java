@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 
 public class WeatherService extends Service {
     private static final String TAG = WeatherService.class.getSimpleName();
-    public String processName = Application.getProcessName();
+    private static final String processName = Application.getProcessName();
 
     private ExecutorService executorService;
 
@@ -58,7 +58,6 @@ public class WeatherService extends Service {
                 @Override
                 public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
                     try {
-                        Log.i(TAG, "onRequestSucceed: callback == null:" + (callback == null));
                         callback.onWeatherInfoObtained(weatherInfo);
                     } catch (RemoteException e) {
                         e.printStackTrace();
