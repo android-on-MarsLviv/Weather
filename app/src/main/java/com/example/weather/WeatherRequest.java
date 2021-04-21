@@ -38,7 +38,7 @@ public class WeatherRequest implements Parcelable {
         this.weatherApiKey = parcel.readString();
         this.weatherApiEntryPoint = parcel.readString();
         this.cityName = parcel.readString();
-        this.location = Location.CREATOR.createFromParcel(parcel);
+        this.location = parcel.readParcelable(Location.class.getClassLoader());
     }
 
     @Override
@@ -52,10 +52,6 @@ public class WeatherRequest implements Parcelable {
         parcel.writeString(weatherApiEntryPoint);
         parcel.writeString(cityName);
         parcel.writeParcelable(location, flags);
-        /*if (location == null) {
-            location = new Location("");
-        }
-        location.writeToParcel(parcel, flags);*/
     }
 
     public static final Parcelable.Creator<WeatherRequest> CREATOR = new Parcelable.Creator<WeatherRequest>(){
