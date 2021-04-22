@@ -1,10 +1,10 @@
 package com.example.weather;
 
+import android.app.Application;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -14,23 +14,25 @@ import java.util.concurrent.Executors;
 
 public class WeatherService extends Service {
     private static final String TAG = WeatherService.class.getSimpleName();
+    private static final String processName = Application.getProcessName();
 
     private ExecutorService executorService;
 
-    private final IBinder binder = new WeatherBinder();
-
-    private Handler handler;
+    IWeatherService.Stub binder = new IWeatherService.Stub() {
+        @Override
+        public void getCurrentWeatherInfo(WeatherRequest weatherRequest, IWeatherServiceCallback callback) {
+            Log.i(TAG, "make binder");
+            WeatherService.this.getCurrentWeatherInfo(weatherRequest, callback);
+        }
+    };
 
     @Override
     public void onCreate() {
         super.onCreate();
-        executorService = Executors.newSingleThreadExecutor();
-    }
 
-    public class WeatherBinder extends Binder {
-        WeatherService getService() {
-            return WeatherService.this;
-        }
+        executorService = Executors.newSingleThreadExecutor();
+
+        Log.i(TAG, "onCreate: Process name: " + processName);
     }
 
     @Override
@@ -38,42 +40,45 @@ public class WeatherService extends Service {
         return binder;
     }
 
-    public void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequest, @NonNull WeatherServiceCallback callback) {
-        Log.i(TAG, "getCurrentWeatherInfo");
+    private void getCurrentWeatherInfo(@NonNull WeatherRequest weatherRequest, IWeatherServiceCallback callback) {
         WeatherProviderRunnable weatherProviderRunnable = new WeatherProviderRunnable(weatherRequest, callback);
         executorService.execute(weatherProviderRunnable);
     }
 
     private class WeatherProviderRunnable implements Runnable {
         private final WeatherRequest weatherRequest;
-        private final WeatherServiceCallback callback;
+        private final IWeatherServiceCallback callback;
 
-        public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequest, @NonNull WeatherServiceCallback callback) {
+        public WeatherProviderRunnable(@NonNull WeatherRequest weatherRequest, @NonNull IWeatherServiceCallback callback) {
             this.weatherRequest = weatherRequest;
             this.callback = callback;
         }
 
         public void run() {
-            Log.d(TAG, "run");
-            handler = new Handler(getMainLooper());
+            Log.i(TAG, "WeatherProviderRunnable: run");
 
             WeatherInfoProvider weatherInfoProvider = new WeatherInfoProvider(weatherRequest);
             weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
                 @Override
                 public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
-                    handler.post(() -> callback.onWeatherInfoObtained(weatherInfo));
+                    try {
+                        callback.onWeatherInfoObtained(weatherInfo);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                        Log.e(TAG, "WeatherProviderRunnable: onRequestSucceed: couldn't make RequestCallback");
+                    }
                 }
 
                 @Override
                 public void onRequestFailed() {
-                    handler.post(() -> callback.onError());
+                    try {
+                        callback.onError();
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                        Log.e(TAG, "WeatherProviderRunnable: onRequestFailed: couldn't make RequestCallback");
+                    }
                 }
             });
         }
-    }
-
-    public interface WeatherServiceCallback {
-        void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo);
-        void onError();
     }
 }

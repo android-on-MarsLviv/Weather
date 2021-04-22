@@ -40,21 +40,20 @@ public class WeatherInfoProvider {
     public void provideWeather(@NonNull WeatherInfoProvider.RequestCallback callback) {
         try {
             uri = weatherRequest.createRequestUri();
-            Log.d(TAG, "provideWeather by uri:" + uri);
+            Log.i(TAG, "provideWeather: uri: " + uri);
             String response = doRequest();
             if (response == null) {
-                Log.i(TAG, "response is empty");
+                Log.i(TAG, "provideWeather: response is empty");
                 callback.onRequestFailed();
                 return;
             }
             Optional<WeatherInfo> weatherInfo = parseWeather(response);
             if (!weatherInfo.isPresent()) {
-                Log.i(TAG, "weatherInfo is empty");
+                Log.i(TAG, "provideWeather: weatherInfo is empty");
                 callback.onRequestFailed();
                 return;
             }
-            WeatherInfo weather = weatherInfo.get();
-            callback.onRequestSucceed(weather);
+            callback.onRequestSucceed(weatherInfo.get());
         } catch (IOException e) {
             e.printStackTrace();
             callback.onRequestFailed();
@@ -63,7 +62,7 @@ public class WeatherInfoProvider {
 
     @Nullable
     private String doRequest() throws IOException {
-        Log.d(TAG, "doRequest");
+        Log.i(TAG, "doRequest");
 
         InputStream stream = null;
         HttpsURLConnection connection = null;
@@ -78,7 +77,7 @@ public class WeatherInfoProvider {
                 stream = connection.getInputStream();
                 return StreamUtils.streamToString(stream);
             } else {
-                Log.i(TAG, "Error. Response code:" + connection.getResponseCode());
+                Log.i(TAG, "doRequest: Response code:" + connection.getResponseCode());
                 return null;
             }
         } finally {

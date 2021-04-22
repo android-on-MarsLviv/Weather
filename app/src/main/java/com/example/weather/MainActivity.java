@@ -3,13 +3,14 @@ package com.example.weather;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -20,6 +21,7 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String processName = Application.getProcessName();
 
     private TextView showWeatherView;
     private EditText editCityView;
@@ -28,20 +30,38 @@ public class MainActivity extends AppCompatActivity {
 
     private LocationClient locationClient;
 
-    private WeatherService weatherService;
+    private IWeatherService weatherService;
+    private IWeatherServiceCallback.Stub weatherServiceCallback = new IWeatherServiceCallback.Stub() {
+        @Override
+        public void onWeatherInfoObtained(WeatherInfo weatherInfo) {
+            runOnUiThread(() -> {
+                showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                updateViews();
+            });
+        }
 
-    private final ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onError() {
+            runOnUiThread(() -> {
+                showWeatherView.setText(getText(R.string.default_weather_message).toString());
+                Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
+                updateViews();
+            });
+            Log.i(TAG, "onError");
+        }
+    };
+
+    private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
-            WeatherService.WeatherBinder binder = (WeatherService.WeatherBinder) service;
-            weatherService = binder.getService();
-            Log.d(TAG, "WeatherService connected");
+            weatherService = IWeatherService.Stub.asInterface(service);
+            Log.i(TAG, "WeatherService connected");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             weatherService = null;
-            Log.d(TAG, "WeatherService disconnected");
+            Log.i(TAG, "WeatherService disconnected");
         }
     };
 
@@ -59,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
         weatherByLocationButton.setOnClickListener(this::onClickByLocation);
 
         locationClient = new LocationClient(this);
+
+        Log.i(TAG, "onCreate: Process name: " + processName);
     }
 
     @Override
@@ -84,56 +106,49 @@ public class MainActivity extends AppCompatActivity {
         String cityName = editCityView.getText().toString();
         if (TextUtils.isEmpty(cityName)) {
             showWeatherView.setText(getText(R.string.error_wrong_city).toString());
+            weatherByCityButton.setEnabled(true);
             return;
         }
 
         WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
                 .setCity(cityName)
                 .build();
-        weatherService.getCurrentWeatherInfo(weatherRequest, new WeatherService.WeatherServiceCallback() {
-            @Override
-            public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
-                showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
-                weatherByCityButton.setEnabled(true);
-            }
 
-            @Override
-            public void onError() {
-                showWeatherView.setText(getText(R.string.default_weather_message).toString());
-                Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
-                weatherByCityButton.setEnabled(true);
-            }
-        });
+        try {
+            weatherService.getCurrentWeatherInfo(weatherRequest, weatherServiceCallback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            Log.i(TAG, "onClickByCity: RemoteException during weather service request");
+        }
     }
 
     public void onClickByLocation(View view) {
         Log.i(TAG, "onClickByLocation");
         weatherByLocationButton.setEnabled(false);
 
-        locationClient.getLocation(new LocationClient.RetrieveLocationCallback() {
-            @Override
-            public void onRetrieveLocation(@NonNull Location location) {
-                Log.d(TAG, "onRetrieveLocation(): latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
+        locationClient.getLocation(location -> {
+            Log.i(TAG, "onRetrieveLocation: latitude:" + location.getLatitude() + "  longitude:" + location.getLongitude());
 
-                WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
-                        .setLocation(location)
-                        .build();
-                weatherService.getCurrentWeatherInfo(weatherRequest, new WeatherService.WeatherServiceCallback() {
-                    @Override
-                    public void onWeatherInfoObtained(@NonNull WeatherInfo weatherInfo) {
-                        showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
-                        weatherByLocationButton.setEnabled(true);
-                    }
-
-                    @Override
-                    public void onError() {
-                        showWeatherView.setText(getText(R.string.default_weather_message).toString());
-                        Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
-                        weatherByLocationButton.setEnabled(true);
-                    }
-                });
+            WeatherRequest weatherRequest = new WeatherRequest.Builder(getText(R.string.weather_api_key).toString(), getText(R.string.weather_api_entry_point).toString())
+                    .setLocation(location)
+                    .build();
+            try {
+                weatherService.getCurrentWeatherInfo(weatherRequest, weatherServiceCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                Log.i(TAG, "onClickByLocation: RemoteException during weather service request");
             }
         });
+    }
+
+    private void updateViews() {
+        if (!weatherByCityButton.isEnabled()) {
+            weatherByCityButton.setEnabled(true);
+        }
+        if (!weatherByLocationButton.isEnabled()) {
+            editCityView.setText("");
+            weatherByLocationButton.setEnabled(true);
+        }
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

@@ -51,11 +51,12 @@ public class LocationClient {
         };
 
         if (!checkPermission()) {
+            Log.i(TAG, "getLocation: requesting permissions");
             requestPermission();
             return;
         }
 
-        Log.i(TAG, "permissions already granted");
+        Log.i(TAG, "getLocation: permissions already granted");
         getFusedLocation();
     }
 
@@ -65,7 +66,7 @@ public class LocationClient {
     }
 
     private void requestPermission() {
-        Log.i(TAG, "request permissions");
+        Log.i(TAG, "requestPermission");
         ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
     }
 
@@ -73,14 +74,14 @@ public class LocationClient {
     private void getFusedLocation() {
         fusedLocationClient.getLastLocation().addOnSuccessListener(activity, location -> {
             if (location == null) {
-                Log.i(TAG, "location == null");
+                Log.i(TAG, "getFusedLocation: location == null, call requestLocationUpdates");
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
                 return;
             }
 
             retrieveLocationCallback.onRetrieveLocation(location);
-        }).addOnCanceledListener(() -> Log.i(TAG, "location listener cancelled."))
-                .addOnFailureListener((location) -> Log.i(TAG, "Location listener failed."));
+        }).addOnCanceledListener(() -> Log.i(TAG, "getFusedLocation: location listener cancelled."))
+                .addOnFailureListener((location) -> Log.i(TAG, "getFusedLocation: Location listener failed."));
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull int[] grantResults) {

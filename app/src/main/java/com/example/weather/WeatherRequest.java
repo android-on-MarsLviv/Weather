@@ -2,11 +2,13 @@ package com.example.weather;
 
 import android.location.Location;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class WeatherRequest {
+public class WeatherRequest implements Parcelable {
     private static final String APP_ID = "appid";
     private static final String API_UNITS = "units";
     private static final String API_UNITS_VALUE = "metric";
@@ -14,12 +16,11 @@ public class WeatherRequest {
     private static final String LONGITUDE = "lon";
     private static final String CITY = "q";
 
-    private final String weatherApiKey;
-    private final String weatherApiEntryPoint;
+    private String weatherApiKey;
+    private String weatherApiEntryPoint;
 
-    private final String cityName;
-    private final Location location;
-
+    private String cityName;
+    private Location location;
 
     WeatherRequest(@Nullable String cityName, @Nullable Location location, @NonNull String weatherApiKey, @NonNull String weatherApiEntryPoint) {
         this.cityName = cityName;
@@ -27,6 +28,42 @@ public class WeatherRequest {
         this.weatherApiEntryPoint = weatherApiEntryPoint;
         this.location = location;
     }
+
+    private WeatherRequest(Parcel parcel) {
+        readFromParcel(parcel);
+    }
+
+    private void readFromParcel(Parcel parcel) {
+        this.weatherApiKey = parcel.readString();
+        this.weatherApiEntryPoint = parcel.readString();
+        this.cityName = parcel.readString();
+        this.location = parcel.readParcelable(Location.class.getClassLoader());
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        parcel.writeString(weatherApiKey);
+        parcel.writeString(weatherApiEntryPoint);
+        parcel.writeString(cityName);
+        parcel.writeParcelable(location, flags);
+    }
+
+    public static final Parcelable.Creator<WeatherRequest> CREATOR = new Parcelable.Creator<WeatherRequest>(){
+        @Override
+        public WeatherRequest createFromParcel(Parcel parcel) {
+            return new WeatherRequest(parcel);
+        }
+
+        @Override
+        public WeatherRequest[] newArray(int size) {
+            return new WeatherRequest[size];
+        }
+    };
 
     public Uri createRequestUri() {
         Uri.Builder uriBuilder = Uri.parse(weatherApiEntryPoint)
