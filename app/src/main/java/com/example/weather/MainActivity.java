@@ -51,7 +51,19 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private ServiceConnection connection;
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            weatherService = IWeatherService.Stub.asInterface(service);
+            Log.i(TAG, "WeatherService connected");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            weatherService = null;
+            Log.i(TAG, "WeatherService disconnected");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,20 +79,6 @@ public class MainActivity extends AppCompatActivity {
         weatherByLocationButton.setOnClickListener(this::onClickByLocation);
 
         locationClient = new LocationClient(this);
-
-        connection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName className, IBinder service) {
-                weatherService = IWeatherService.Stub.asInterface(service);
-                Log.i(TAG, "WeatherService connected");
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName arg0) {
-                weatherService = null;
-                Log.i(TAG, "WeatherService disconnected");
-            }
-        };
 
         Log.i(TAG, "onCreate: Process name: " + processName);
     }
