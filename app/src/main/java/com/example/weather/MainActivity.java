@@ -31,7 +31,25 @@ public class MainActivity extends AppCompatActivity {
     private LocationClient locationClient;
 
     private IWeatherService weatherService;
-    private IWeatherServiceCallback.Stub weatherServiceCallback;
+    private IWeatherServiceCallback.Stub weatherServiceCallback = new IWeatherServiceCallback.Stub() {
+        @Override
+        public void onWeatherInfoObtained(WeatherInfo weatherInfo) {
+            runOnUiThread(() -> {
+                showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
+                updateViews();
+            });
+        }
+
+        @Override
+        public void onError() {
+            runOnUiThread(() -> {
+                showWeatherView.setText(getText(R.string.default_weather_message).toString());
+                Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
+                updateViews();
+            });
+            Log.i(TAG, "onError");
+        }
+    };
 
     private ServiceConnection connection;
 
@@ -49,26 +67,6 @@ public class MainActivity extends AppCompatActivity {
         weatherByLocationButton.setOnClickListener(this::onClickByLocation);
 
         locationClient = new LocationClient(this);
-
-        weatherServiceCallback = new IWeatherServiceCallback.Stub() {
-            @Override
-            public void onWeatherInfoObtained(WeatherInfo weatherInfo) {
-                runOnUiThread(() -> {
-                    showWeatherView.setText(getString(R.string.template_weather_message, weatherInfo.getTemperature(), weatherInfo.getVisibility(), weatherInfo.getHumidity(), weatherInfo.getWindSpeed()));
-                    updateViews();
-                });
-            }
-
-            @Override
-            public void onError() {
-                runOnUiThread(() -> {
-                    showWeatherView.setText(getText(R.string.default_weather_message).toString());
-                    Toast.makeText(MainActivity.this, getText(R.string.error_wrong_request).toString(), Toast.LENGTH_SHORT).show();
-                    updateViews();
-                });
-                Log.i(TAG, "onError");
-            }
-        };
 
         connection = new ServiceConnection() {
             @Override
