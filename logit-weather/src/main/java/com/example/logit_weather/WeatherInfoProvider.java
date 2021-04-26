@@ -1,10 +1,12 @@
 package com.example.logit_weather;
 
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,6 +38,7 @@ public class WeatherInfoProvider {
         this.weatherRequest = weatherRequest;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void provideWeather(@NonNull RequestCallback callback) {
         try {
             uri = weatherRequest.createRequestUri();
@@ -87,6 +90,7 @@ public class WeatherInfoProvider {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private Optional<WeatherInfo> parseWeather(@NonNull String response) {
         try {
             JSONObject json = new JSONObject(response);
