@@ -1,4 +1,4 @@
-package com.example.weather;
+package com.example.logit_weather;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -13,10 +13,10 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationCallback;
 
 public class LocationClient {
     private static final String TAG = LocationClient.class.getSimpleName();

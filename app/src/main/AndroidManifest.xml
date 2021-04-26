@@ -14,13 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Weather">
 
-        <service
-            android:name=".WeatherService"
-            android:enabled="true"
-            android:exported="true"
-            android:process=":weatherProcess">
-        </service>
-
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

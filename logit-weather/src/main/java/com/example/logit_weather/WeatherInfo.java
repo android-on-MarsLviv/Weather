@@ -1,4 +1,4 @@
-package com.example.weather;
+package com.example.logit_weather;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -56,7 +56,7 @@ public class WeatherInfo implements Parcelable {
         parcel.writeString(windSpeed);
     }
 
-    public static final Parcelable.Creator<WeatherInfo> CREATOR = new Parcelable.Creator<WeatherInfo>(){
+    public static final Creator<WeatherInfo> CREATOR = new Creator<WeatherInfo>(){
         @Override
         public WeatherInfo createFromParcel(Parcel parcel) {
             return new WeatherInfo(parcel);

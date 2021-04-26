@@ -1,4 +1,4 @@
-package com.example.weather;
+package com.example.logit_weather;
 
 import android.net.Uri;
 import android.util.Log;
@@ -11,7 +11,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
@@ -37,7 +36,7 @@ public class WeatherInfoProvider {
         this.weatherRequest = weatherRequest;
     }
 
-    public void provideWeather(@NonNull WeatherInfoProvider.RequestCallback callback) {
+    public void provideWeather(@NonNull RequestCallback callback) {
         try {
             uri = weatherRequest.createRequestUri();
             Log.i(TAG, "provideWeather: uri: " + uri);

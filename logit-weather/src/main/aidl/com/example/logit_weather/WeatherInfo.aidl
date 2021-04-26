@@ -1,4 +1,4 @@
 // WeatherInfo.aidl
-package com.example.weather;
+package com.example.logit_weather;
 
 parcelable  WeatherInfo;

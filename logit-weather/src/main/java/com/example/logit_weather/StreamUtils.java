@@ -1,4 +1,4 @@
-package com.example.weather;
+package com.example.logit_weather;
 
 import android.util.Log;
 
