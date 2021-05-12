@@ -1,17 +1,18 @@
-package com.example.weather;
+package com.example.logit_weather;
 
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
@@ -37,7 +38,8 @@ public class WeatherInfoProvider {
         this.weatherRequest = weatherRequest;
     }
 
-    public void provideWeather(@NonNull WeatherInfoProvider.RequestCallback callback) {
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void provideWeather(@NonNull RequestCallback callback) {
         try {
             uri = weatherRequest.createRequestUri();
             Log.i(TAG, "provideWeather: uri: " + uri);
@@ -88,6 +90,7 @@ public class WeatherInfoProvider {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private Optional<WeatherInfo> parseWeather(@NonNull String response) {
         try {
             JSONObject json = new JSONObject(response);

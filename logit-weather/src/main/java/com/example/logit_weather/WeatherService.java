@@ -1,17 +1,21 @@
-package com.example.weather;
+package com.example.logit_weather;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@RequiresApi(api = Build.VERSION_CODES.P)
 public class WeatherService extends Service {
     private static final String TAG = WeatherService.class.getSimpleName();
     private static final String processName = Application.getProcessName();
@@ -54,11 +58,14 @@ public class WeatherService extends Service {
             this.callback = callback;
         }
 
+        @SuppressLint("NewApi")
+        @RequiresApi(api = Build.VERSION_CODES.N)
         public void run() {
             Log.i(TAG, "WeatherProviderRunnable: run");
 
             WeatherInfoProvider weatherInfoProvider = new WeatherInfoProvider(weatherRequest);
             weatherInfoProvider.provideWeather(new WeatherInfoProvider.RequestCallback() {
+                @RequiresApi(api = Build.VERSION_CODES.P)
                 @Override
                 public void onRequestSucceed(@NonNull WeatherInfo weatherInfo) {
                     try {
@@ -69,6 +76,7 @@ public class WeatherService extends Service {
                     }
                 }
 
+                @RequiresApi(api = Build.VERSION_CODES.P)
                 @Override
                 public void onRequestFailed() {
                     try {

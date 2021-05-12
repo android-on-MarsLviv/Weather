@@ -1,8 +1,8 @@
 // IWeatherService.aidl
-package com.example.weather;
+package com.example.logit_weather;
 
-import com.example.weather.WeatherRequest;
-import com.example.weather.IWeatherServiceCallback;
+import com.example.logit_weather.WeatherRequest;
+import com.example.logit_weather.IWeatherServiceCallback;
 
 interface IWeatherService {
     void getCurrentWeatherInfo(in WeatherRequest weatherRequest, in IWeatherServiceCallback callback);

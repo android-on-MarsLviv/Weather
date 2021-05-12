@@ -19,6 +19,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.logit_weather.IWeatherService;
+import com.example.logit_weather.IWeatherServiceCallback;
+import com.example.logit_weather.LocationClient;
+import com.example.logit_weather.WeatherInfo;
+import com.example.logit_weather.WeatherRequest;
+import com.example.logit_weather.WeatherService;
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String processName = Application.getProcessName();

@@ -1,4 +1,4 @@
-package com.example.weather;
+package com.example.logit_weather;
 
 import android.location.Location;
 import android.net.Uri;
@@ -53,7 +53,7 @@ public class WeatherRequest implements Parcelable {
         parcel.writeParcelable(location, flags);
     }
 
-    public static final Parcelable.Creator<WeatherRequest> CREATOR = new Parcelable.Creator<WeatherRequest>(){
+    public static final Creator<WeatherRequest> CREATOR = new Creator<WeatherRequest>(){
         @Override
         public WeatherRequest createFromParcel(Parcel parcel) {
             return new WeatherRequest(parcel);

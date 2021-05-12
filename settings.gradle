@@ -1,2 +1,3 @@
+include ':logit-weather'
 include ':app'
 rootProject.name = "Weather"
